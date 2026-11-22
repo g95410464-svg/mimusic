@@ -68,7 +68,7 @@ function resultsHTML() {
 }
 function render() {
   const [page, id] = route();
-  document.body.classList.toggle('now-playing', page === 'reproductor' && Boolean(player.currentSong)); document.title = player.currentSong ? `${player.currentSong.title} · MiMusica` : 'MiMusica · Tu biblioteca';
+  document.body.classList.toggle('now-playing', page === 'reproductor' && Boolean(player.currentSong)); document.title = player.currentSong ? `${player.currentSong.title} · mimusic` : 'mimusic · Tu biblioteca';
   document.querySelectorAll('[data-route]').forEach(link => {
     const active = link.dataset.route === page || (['album', 'artista'].includes(page) && link.dataset.route === 'biblioteca') || (page === 'playlist' && link.dataset.route === 'playlists');
     if (active) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
@@ -208,7 +208,7 @@ function syncPosition() {
 let lastPlaybackError = '';
 player.addEventListener('change', event => {
   if (event.detail.kind === 'time') { syncPosition(); return; }
-  if (event.detail.kind === 'track') document.title = player.currentSong ? `${player.currentSong.title} · MiMusica` : 'MiMusica · Tu biblioteca';
+  if (event.detail.kind === 'track') document.title = player.currentSong ? `${player.currentSong.title} · mimusic` : 'mimusic · Tu biblioteca';
   if (event.detail.kind === 'track' && route()[0] === 'reproductor') render(); else syncPlayer();
   if (event.detail.kind === 'track' && covers.has(player.currentSong?.coverArt)) player.setArtwork(covers.get(player.currentSong.coverArt));
   if (player.error && player.error !== lastPlaybackError) toast(player.error);

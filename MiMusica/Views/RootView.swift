@@ -16,7 +16,7 @@ struct RootView: View {
                     Label("Ajustes", systemImage: "gearshape")
                 }
             }
-            .navigationTitle("MiMusica")
+            .navigationTitle("mimusic")
             .navigationSplitViewColumnWidth(min: 220, ideal: 260)
         } detail: {
             NavigationStack {

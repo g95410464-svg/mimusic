@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "MiMusica",
-  "short_name": "MiMusica",
+  "name": "mimusic",
+  "short_name": "mimusic",
   "lang": "es",
   "description": "Tu biblioteca privada de Navidrome.",
   "start_url": "/#inicio",

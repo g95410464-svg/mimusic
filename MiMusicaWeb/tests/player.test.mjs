@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { MusicPlayer, queueForSelection } from '../public/player.js';
 import { LibraryClient } from '../public/library-client.js';
 import { createAuth } from '../public/subsonic-auth.js';
-import { createMiMusicaServer } from '../server.mjs';
+import { createMimusicServer } from '../server.mjs';
 
 class AudioStub extends EventTarget {
   src = ''; currentTime = 0; duration = 120; paused = true; ended = false; error = null;
@@ -108,7 +108,7 @@ test('las URLs de streaming renuevan el salt, codifican el ID y no contienen la 
 
 test('el proxy de audio transmite rangos y HEAD, rechaza errores y nunca cachea el audio', async t => {
   let upstreamKind = 'audio', calls = 0;
-  const server = createMiMusicaServer({ fetchImpl: async (url, options) => {
+  const server = createMimusicServer({ fetchImpl: async (url, options) => {
     calls++;
     assert.equal(url.pathname, '/rest/stream.view'); assert.equal(url.searchParams.get('format'), 'raw');
     assert.equal(options.redirect, 'error'); assert.equal(options.headers.Range, 'bytes=0-3');

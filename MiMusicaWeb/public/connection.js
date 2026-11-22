@@ -50,7 +50,7 @@ async function loadConfiguration() {
       window.dispatchEvent(new CustomEvent('mimusica-connected', { detail: { restored: true } }));
     } else {
       submit.disabled = false;
-      showStatus('Introduce tus credenciales una vez. MiMusica recordará tu sesión durante 30 días.');
+      showStatus('Introduce tus credenciales una vez. mimusic recordará tu sesión durante 30 días.');
     }
   } catch {
     configured = false;
@@ -96,13 +96,13 @@ form.addEventListener('submit', async event => {
     password.value = '';
     await connection;
     connected = true;
-    showStatus('Sesión guardada. Puedes recargar o volver a abrir MiMusica sin iniciar sesión durante 30 días.', 'success', true);
+    showStatus('Sesión guardada. Puedes recargar o volver a abrir mimusic sin iniciar sesión durante 30 días.', 'success', true);
     document.querySelector('#connection-close').textContent = 'Ver mi biblioteca';
     document.querySelector('#connection-disconnect').hidden = false;
     window.dispatchEvent(new Event('mimusica-connected'));
   } catch (error) {
     const message = error.name === 'TimeoutError' ? 'La prueba tardó demasiado. Comprueba Tailscale y vuelve a intentarlo.'
-      : error instanceof TypeError || error instanceof SyntaxError ? 'No se pudo contactar con MiMusica. Comprueba la conexión y vuelve a intentarlo.'
+      : error instanceof TypeError || error instanceof SyntaxError ? 'No se pudo contactar con mimusic. Comprueba la conexión y vuelve a intentarlo.'
       : error.message;
     showStatus(message, 'error', true);
   } finally {

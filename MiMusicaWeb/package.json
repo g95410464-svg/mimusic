@@ -1,9 +1,9 @@
 {
-  "name": "mimusica-web",
-  "version": "0.6.0",
+  "name": "mimusic-web",
+  "version": "0.6.1",
   "private": true,
   "type": "module",
-  "description": "MiMusica: diseño tvOS y prueba privada de conexión a Navidrome.",
+  "description": "mimusic: diseño tvOS y prueba privada de conexión a Navidrome.",
   "scripts": {
     "dev": "node server.mjs",
     "start": "node server.mjs",

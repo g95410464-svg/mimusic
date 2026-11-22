@@ -1,4 +1,4 @@
-# MiMusica Web
+# mimusic Web
 
 Web app privada para Navidrome, con interfaz en español inspirada en tvOS y sin dependencias npm.
 
@@ -6,14 +6,14 @@ Web app privada para Navidrome, con interfaz en español inspirada en tvOS y sin
 
 ## Acceso y biblioteca real
 
-1. Abrir MiMusica y pulsar **Conectar mi biblioteca**, o el botón de perfil.
+1. Abrir mimusic y pulsar **Conectar mi biblioteca**, o el botón de perfil.
 2. Introducir las credenciales de **Navidrome**, que pueden ser distintas del usuario SSH `neo`.
 3. Pulsar **Probar conexión** y luego **Ver mi biblioteca**.
 4. Recorrer Inicio, Biblioteca, Playlists o Buscar.
 
-MiMusica recuerda la sesión durante 30 días en ese navegador y recupera la biblioteca al recargar o volver a abrir la web. **Cerrar sesión** retira el acceso de ese navegador; borrar sus cookies también obliga a conectar de nuevo. Cada navegador o instalación de la web app conserva su propia sesión.
+mimusic recuerda la sesión durante 30 días en ese navegador y recupera la biblioteca al recargar o volver a abrir la web. **Cerrar sesión** retira el acceso de ese navegador; borrar sus cookies también obliga a conectar de nuevo. Cada navegador o instalación de la web app conserva su propia sesión.
 
-Los álbumes, artistas, canciones, playlists y portadas proceden de Navidrome. No se importa ni se publica `demo.js`; una biblioteca vacía muestra un estado vacío. Las portadas ausentes usan el icono de MiMusica. Las respuestas de error se muestran con opciones para reintentar.
+Los álbumes, artistas, canciones, playlists y portadas proceden de Navidrome. No se importa ni se publica `demo.js`; una biblioteca vacía muestra un estado vacío. Las portadas ausentes usan el icono de mimusic. Las respuestas de error se muestran con opciones para reintentar.
 
 Inicio muestra álbumes recientes y una selección de canciones, con enlaces al catálogo completo y su cantidad total. Biblioteca carga automáticamente todas las páginas de álbumes y canciones, y permite navegar artistas → álbumes. No hace falta pulsar «Cargar más». Las playlists muestran sus entradas. Buscar usa `search3`, con espera de 300 ms, cancelación y protección frente a respuestas antiguas. Muestra hasta 100 canciones, 50 álbumes y 50 artistas por consulta; para más coincidencias se debe afinar la búsqueda.
 
@@ -25,10 +25,10 @@ El audio usa un elemento HTML persistente y el proxy del mismo origen, con sopor
 
 ## Sesión y seguridad
 
-- La contraseña solo se usa en el navegador al conectar para calcular `md5(password + salt)`. El formulario la borra y, al confirmar la sesión persistente, el cliente descarta su referencia. Nunca se envía ni se guarda la contraseña en MiMusica o Navidrome.
+- La contraseña solo se usa en el navegador al conectar para calcular `md5(password + salt)`. El formulario la borra y, al confirmar la sesión persistente, el cliente descarta su referencia. Nunca se envía ni se guarda la contraseña en mimusic o Navidrome.
 - El navegador recibe una cookie aleatoria de 256 bits, `HttpOnly`, `Secure` en producción, `SameSite=Strict`, con ruta `/api` y duración de 30 días. No contiene el usuario, la contraseña ni el token de Subsonic. JavaScript no necesita leerla. No se guardan credenciales en localStorage, IndexedDB ni la caché del service worker.
 - Debian guarda el hash del identificador de sesión, su vencimiento y la autorización de Subsonic en `/app/data/sessions.json`, dentro del volumen Docker `mimusica_sessions`. La carpeta tiene permisos 700 y el archivo 600, con propietario `node`. El token es un secreto de acceso y el volumen debe tratarse como información privada.
-- Para recuperar una sesión sin guardar la contraseña, el servidor reutiliza el par token/salt de Subsonic creado al iniciar sesión. Es una adaptación explícita del requisito original de salt nuevo por petición: el salt se renueva en cada inicio de sesión. No se puede producir un nuevo token para otro salt sin conservar la contraseña. La cookie aleatoria identifica la sesión de MiMusica y se rota al volver a conectar; cerrar sesión elimina su registro del servidor.
+- Para recuperar una sesión sin guardar la contraseña, el servidor reutiliza el par token/salt de Subsonic creado al iniciar sesión. Es una adaptación explícita del requisito original de salt nuevo por petición: el salt se renueva en cada inicio de sesión. No se puede producir un nuevo token para otro salt sin conservar la contraseña. La cookie aleatoria identifica la sesión de mimusic y se rota al volver a conectar; cerrar sesión elimina su registro del servidor.
 - Las sesiones sobreviven a reinicios y reconstrucciones del contenedor mediante el volumen persistente. Caducan a los 30 días desde el inicio. Si Navidrome rechaza la cuenta, la aplicación pide conectar de nuevo.
 - El servidor solo permite endpoints de lectura y parámetros explícitos hacia su Navidrome configurado. No es un proxy a URLs arbitrarias.
 - Las portadas se solicitan con POST y se conservan como URLs de objetos en memoria; se revocan al cerrar sesión. Todas las rutas `/api/` responden sin caché y se excluyen del service worker.
@@ -71,10 +71,10 @@ El propietario confirmó conexión, biblioteca real, reproducción y entrada aut
 
 En navegador, el catálogo local de prueba produjo 139 filas. Un WAV sintético de 90 segundos permitió verificar reproducción con tiempo creciente, continuidad al navegar, pausa, avance a 40 segundos, siguiente canción, cola de 139 entradas y cierre de sesión que elimina la fuente de audio. También se comprobó restauración después de recargar y de reiniciar el proceso, audio con URL sin credenciales y cierre de sesión seguido de recarga. Estos datos de prueba están excluidos del contenedor y no sustituyen la biblioteca real.
 
-Las pruebas de sesiones verifican expiración, revocación persistente, cookies protegidas, rechazo de origen externo, escritura concurrente para varios dispositivos y limpieza del cliente ante un 401. En el navegador se verificó que el WAV termina y arranca la siguiente canción sin pulsar otro botón, tanto en orden como en aleatorio, y que activar aleatorio no reinicia la canción actual. La versión publicada es 0.6.0, service worker v8. El servicio HTTPS y el contenedor están saludables, y se conserva el volumen privado de sesiones. La reproducción en segundo plano en iPad y AirPods sigue pendiente de prueba física.
+Las pruebas de sesiones verifican expiración, revocación persistente, cookies protegidas, rechazo de origen externo, escritura concurrente para varios dispositivos y limpieza del cliente ante un 401. En el navegador se verificó que el WAV termina y arranca la siguiente canción sin pulsar otro botón, tanto en orden como en aleatorio, y que activar aleatorio no reinicia la canción actual. La versión publicada es 0.6.1, service worker v9. El servicio HTTPS y el contenedor están saludables, y se conserva el volumen privado de sesiones. La reproducción en segundo plano en iPad y AirPods sigue pendiente de prueba física.
 
 ## Diseño
 
-Referencia: [tvOS 18 UI Kit](https://www.figma.com/design/POFwU5kU6Clk9is7n8P5TB/tvOS-18-UI-Kit--Community-?node-id=5-8298), pantallas Home `2852:2124`, Now Playing `2855:2248` y Library `2883:2770`. Se conservan la navegación en cápsula, el fondo difuminado y el estilo de tarjetas. El nombre y el icono de MiMusica son propios. Los recursos decorativos del kit permanecen locales; las portadas de la biblioteca se descargan de Navidrome.
+Referencia: [tvOS 18 UI Kit](https://www.figma.com/design/POFwU5kU6Clk9is7n8P5TB/tvOS-18-UI-Kit--Community-?node-id=5-8298), pantallas Home `2852:2124`, Now Playing `2855:2248` y Library `2883:2770`. Se conservan la navegación en cápsula, el fondo difuminado y el estilo de tarjetas. El nombre y el icono de mimusic son propios. Los recursos decorativos del kit permanecen locales; las portadas de la biblioteca se descargan de Navidrome.
 
 Las fuentes Swift de la carpeta hermana `MiMusica/` son trabajo previo pausado, no forman parte de la web y no se han validado con Xcode.

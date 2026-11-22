@@ -57,7 +57,7 @@ export function authenticatedURL(serverURL, endpoint, auth, params = {}) {
   if (endpoint === 'getAlbumList2' && !['newest', 'random', 'alphabeticalByName', 'alphabeticalByArtist', 'recent'].includes(params.type)) throw new SubsonicError('invalidParameter', 'El tipo de listado no es válido.', 400);
   if (endpoint === 'stream' && params.format && params.format !== 'raw') throw new SubsonicError('invalidParameter', 'El formato de reproducción no es válido.', 400);
   const url = new URL(`rest/${endpoint}.view`, validateServerURL(serverURL));
-  url.search = new URLSearchParams({ ...params, u: auth.username.trim(), t: auth.token, s: auth.salt, v: '1.16.1', c: 'MiMusica', f: 'json' });
+  url.search = new URLSearchParams({ ...params, u: auth.username.trim(), t: auth.token, s: auth.salt, v: '1.16.1', c: 'mimusic', f: 'json' });
   return url;
 }
 

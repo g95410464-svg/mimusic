@@ -21,7 +21,7 @@ enum SubsonicAuth {
             URLQueryItem(name: "t", value: token(password: password, salt: salt)),
             URLQueryItem(name: "s", value: salt),
             URLQueryItem(name: "v", value: "1.16.1"),
-            URLQueryItem(name: "c", value: "MiMusica"),
+            URLQueryItem(name: "c", value: "mimusic"),
             URLQueryItem(name: "f", value: "json")
         ]
     }

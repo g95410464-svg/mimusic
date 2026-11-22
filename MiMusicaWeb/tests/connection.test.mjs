@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { once } from 'node:events';
 import { md5, createAuth } from '../public/subsonic-auth.js';
 import { decodeResponse, ping, validateServerURL } from '../subsonic.mjs';
-import { createMiMusicaServer } from '../server.mjs';
+import { createMimusicServer } from '../server.mjs';
 
 test('MD5 coincide con el ejemplo oficial de Subsonic y con UTF-8 y varios bloques', () => {
   assert.equal(createAuth('joe', 'sesame', 'c19b2d').token, '26719a1196d2a940705a59634eb18eab');
@@ -50,7 +50,7 @@ test('ping construye los parámetros del protocolo sin contraseña y rechaza red
     assert.equal(url.searchParams.get('t'), auth.token);
     assert.equal(url.searchParams.get('s'), auth.salt);
     assert.equal(url.searchParams.get('v'), '1.16.1');
-    assert.equal(url.searchParams.get('c'), 'MiMusica');
+    assert.equal(url.searchParams.get('c'), 'mimusic');
     assert.equal(url.searchParams.has('p'), false);
     assert.equal(options.redirect, 'error');
     assert.equal(options.cache, 'no-store');
@@ -71,9 +71,9 @@ test('ping traduce fallos de red, tiempo, HTTP y JSON', async () => {
   await assert.rejects(ping('https://music.example', { ...auth, password: 'never send this' }), { status: 400 });
 });
 
-test('API de MiMusica prueba credenciales sin cachearlas ni permitir formularios externos', async t => {
+test('API de mimusic prueba credenciales sin cachearlas ni permitir formularios externos', async t => {
   let upstreamCalls = 0;
-  const server = createMiMusicaServer({ fetchImpl: async url => {
+  const server = createMimusicServer({ fetchImpl: async url => {
     upstreamCalls++;
     const ok = url.searchParams.get('u') === 'correcto';
     return Response.json({ 'subsonic-response': ok ? { status: 'ok' } : { status: 'failed', error: { code: 40 } } });

@@ -12,7 +12,7 @@ const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || '127.0.0.1';
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 
-export function createMiMusicaServer({
+export function createMimusicServer({
   serverURL = process.env.NAVIDROME_URL || 'https://debian.tailfd03e7.ts.net',
   publicURL = process.env.NAVIDROME_PUBLIC_URL || 'https://debian.tailfd03e7.ts.net',
   appOrigin = process.env.APP_ORIGIN || '',
@@ -22,6 +22,7 @@ export function createMiMusicaServer({
   validateServerURL(serverURL);
   validateServerURL(publicURL);
   const secureCookie = !appOrigin || appOrigin.startsWith('https://');
+  // Keep the existing cookie name so the product rename preserves saved sessions.
   const cookieName = secureCookie ? '__Secure-MiMusicaSession' : 'MiMusicaSession';
   return createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -46,7 +47,7 @@ export function createMiMusicaServer({
       const origin = req.headers.origin;
       const allowedOrigins = [`http://${req.headers.host}`, `https://${req.headers.host}`, appOrigin];
       if (req.headers['sec-fetch-site'] === 'cross-site' || (origin && !allowedOrigins.includes(origin))) {
-        json(403, { message: 'La petición debe realizarse desde MiMusica.' }); return;
+        json(403, { message: 'La petición debe realizarse desde mimusic.' }); return;
       }
       if (pathname === '/api/config' && req.method === 'GET') {
         json(200, { serverURL: publicURL });
@@ -58,7 +59,7 @@ export function createMiMusicaServer({
       }
       if (pathname === '/api/stream') {
         if (!['GET', 'HEAD'].includes(req.method)) { res.setHeader('Allow', 'GET, HEAD'); json(405, { message: 'Método no permitido.' }); return; }
-        if (req.headers['sec-fetch-site'] === 'cross-site') { json(403, { message: 'Abre la canción desde MiMusica.' }); return; }
+        if (req.headers['sec-fetch-site'] === 'cross-site') { json(403, { message: 'Abre la canción desde mimusic.' }); return; }
         const query = new URL(req.url, 'http://localhost').searchParams;
         const allowed = ['username', 'token', 'salt', 'id'];
         if ([...query.keys()].some(key => !allowed.includes(key) || query.getAll(key).length !== 1)) { json(400, { message: 'La petición de audio no es válida.' }); return; }
@@ -171,15 +172,15 @@ export function createMiMusicaServer({
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const sessionStore = await new SessionStore(process.env.SESSION_STORE_PATH || resolve(dirname(fileURLToPath(import.meta.url)), '.data/sessions.json')).initialize();
-    const server = createMiMusicaServer({ sessionStore });
+    const server = createMimusicServer({ sessionStore });
     server.on('error', error => {
-      console.error(error.code === 'EADDRINUSE' ? `El puerto ${port} está ocupado.` : 'No se pudo iniciar MiMusica.');
+      console.error(error.code === 'EADDRINUSE' ? `El puerto ${port} está ocupado.` : 'No se pudo iniciar mimusic.');
       process.exitCode = 1;
     });
-    server.listen(port, host, () => console.log(`MiMusica: http://${host}:${port}`));
+    server.listen(port, host, () => console.log(`mimusic: http://${host}:${port}`));
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.close());
   } catch {
-    console.error('No se pudo iniciar MiMusica. Revisa la dirección de Navidrome configurada.');
+    console.error('No se pudo iniciar mimusic. Revisa la dirección de Navidrome configurada.');
     process.exitCode = 1;
   }
 }

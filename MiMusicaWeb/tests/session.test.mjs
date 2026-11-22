@@ -7,7 +7,7 @@ import { once } from 'node:events';
 import { SessionStore, SESSION_SECONDS } from '../session-store.mjs';
 import { createAuth } from '../public/subsonic-auth.js';
 import { LibraryClient } from '../public/library-client.js';
-import { createMiMusicaServer } from '../server.mjs';
+import { createMimusicServer } from '../server.mjs';
 
 async function temporaryFile(t) {
   const directory = await mkdtemp(join(tmpdir(), 'mimusica-sessions-'));
@@ -48,7 +48,7 @@ test('las escrituras simultáneas conservan las sesiones de varios dispositivos 
 
 test('recordar sesión permite recargar, consultar y reproducir sin reenviar credenciales; cerrar sesión revoca la cookie', async t => {
   const file = await temporaryFile(t), sessionStore = await new SessionStore(file).initialize();
-  const server = createMiMusicaServer({ sessionStore, appOrigin: 'https://music.example', fetchImpl: async url => {
+  const server = createMimusicServer({ sessionStore, appOrigin: 'https://music.example', fetchImpl: async url => {
     assert.equal(url.searchParams.get('u'), 'neo');
     if (url.pathname.endsWith('stream.view')) return new Response(new Uint8Array([1, 2]), { headers: { 'Content-Type': 'audio/mpeg' } });
     return Response.json({ 'subsonic-response': { status: 'ok', searchResult3: { song: [{ id: 'a', title: 'Mi canción' }] } } });

@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { createAuth } from '../public/subsonic-auth.js';
 import { LibraryClient, searchResult, artistList } from '../public/library-client.js';
 import { authenticatedURL } from '../subsonic.mjs';
-import { createMiMusicaServer } from '../server.mjs';
+import { createMimusicServer } from '../server.mjs';
 
 test('la búsqueda y los artistas admiten arrays ausentes o vacíos', () => {
   assert.deepEqual(searchResult({}), { songs: [], albums: [], artists: [] });
@@ -94,7 +94,7 @@ test('los endpoints de biblioteca no pueden cambiar la autenticación ni ejecuta
 });
 
 test('proxy de biblioteca y portadas entrega datos reales del servicio inyectado sin caché', async t => {
-  const server = createMiMusicaServer({ fetchImpl: async url => {
+  const server = createMimusicServer({ fetchImpl: async url => {
     if (url.pathname.endsWith('/getCoverArt.view')) return new Response(new Uint8Array([137, 80, 78, 71]), { headers: { 'Content-Type': 'image/png' } });
     assert.equal(url.pathname, '/rest/search3.view');
     assert.equal(url.searchParams.get('query'), 'música');
