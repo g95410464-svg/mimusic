@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!package.json
+!server.mjs
+!subsonic.mjs
+!session-store.mjs
+!public/
+!public/**
+public/demo.js

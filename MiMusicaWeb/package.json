@@ -1,0 +1,14 @@
+{
+  "name": "mimusica-web",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "description": "MiMusica: diseño tvOS y prueba privada de conexión a Navidrome.",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "check": "node --check public/app.js && node --check public/player.js && node --check public/library-client.js && node --check public/sw.js && node --check public/connection.js && node --check public/subsonic-auth.js && node --check subsonic.mjs && node --check session-store.mjs && node --check server.mjs",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=22" }
+}

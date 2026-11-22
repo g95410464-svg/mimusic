@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101010">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MiMusica">
+  <meta name="description" content="MiMusica: tu espacio musical privado, con conexión a Navidrome.">
+  <title>MiMusica · Tu música, a tu manera</title>
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-180.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="playing-ambient" aria-hidden="true"></div>
+  <header class="header">
+    <a class="brand" href="#inicio" aria-label="MiMusica, inicio">
+      <img src="/assets/icon.svg" width="34" height="34" alt="">
+      <span>MiMusica</span>
+    </a>
+    <nav class="tabs" aria-label="Navegación principal">
+      <a href="#inicio" data-route="inicio">Inicio</a>
+      <a href="#biblioteca" data-route="biblioteca">Biblioteca</a>
+      <a href="#playlists" data-route="playlists">Playlists</a>
+      <a href="#reproductor" data-route="reproductor">Ahora suena</a>
+      <a href="#buscar" data-route="buscar" class="search-tab" aria-label="Buscar">
+        <img class="figma-icon" src="/assets/imgMagnifyingglass2.svg" alt="">
+      </a>
+    </nav>
+    <button class="profile" type="button" data-action="settings" aria-label="Abrir ajustes de MiMusica">M</button>
+  </header>
+
+  <main id="main" tabindex="-1"></main>
+  <audio id="audio-player" preload="metadata"></audio>
+
+  <footer class="mini-player" aria-label="Reproductor" hidden>
+    <button class="mini-song" type="button" data-action="now-playing" aria-label="Abrir Ahora suena">
+      <img id="mini-cover" src="/assets/icon.svg" alt="" width="52" height="52">
+      <span><strong id="mini-title">Sin reproducción</strong><span id="mini-artist"></span></span>
+    </button>
+    <div class="mini-controls">
+      <button class="icon-button shuffle-button" data-action="shuffle" aria-label="Reproducción aleatoria" aria-pressed="false" title="Reproducción aleatoria"><img src="/assets/shuffle.svg" width="22" height="22" alt=""></button>
+      <button class="icon-button" data-action="previous" aria-label="Canción anterior"><span class="skip-icon previous" aria-hidden="true"></span></button>
+      <button class="icon-button mini-play" data-action="play" aria-label="Reproducir"><span class="play-icon" aria-hidden="true"></span></button>
+      <button class="icon-button" data-action="next" aria-label="Siguiente canción"><span class="skip-icon" aria-hidden="true"></span></button>
+    </div>
+    <div class="mini-end"><span id="mini-status" class="playback-status" aria-live="polite"></span><button class="icon-button" data-action="queue" aria-label="Ver cola"><img class="figma-icon" src="/assets/imgList.svg" alt=""></button></div>
+  </footer>
+
+  <dialog id="settings-dialog" class="sheet" aria-labelledby="settings-title">
+    <div class="sheet-top"><span class="eyebrow">TU ESPACIO PERSONAL</span><button class="close-button" data-action="close-dialog" aria-label="Cerrar ajustes">×</button></div>
+    <img class="settings-logo" src="/assets/icon.svg" width="64" height="64" alt="">
+    <h2 id="settings-title">Conecta tu música.</h2>
+    <p>Abre tu biblioteca privada de Navidrome.</p>
+    <form id="connection-form" class="connection-form" novalidate>
+      <label for="navidrome-url">Servidor</label>
+      <input id="navidrome-url" name="server" type="url" readonly aria-describedby="connection-help" placeholder="Cargando servidor…">
+      <label for="navidrome-user">Usuario de Navidrome</label>
+      <input id="navidrome-user" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="256" aria-describedby="connection-status">
+      <label for="navidrome-password">Contraseña</label>
+      <input id="navidrome-password" name="password" type="password" autocomplete="current-password" required aria-describedby="connection-status">
+      <p id="connection-help" class="small-copy">MiMusica recuerda tu sesión durante 30 días en este navegador. Usa «Cerrar sesión» para retirar el acceso de este dispositivo.</p>
+      <div id="connection-actions" class="connection-actions">
+        <div id="connection-result" class="connection-result" role="status" aria-live="polite" aria-atomic="true" data-state="idle">
+          <strong id="connection-result-title">Tu conexión</strong>
+          <p id="connection-status" class="connection-status">Cargando configuración…</p>
+        </div>
+        <button id="connection-submit" type="submit" class="primary-button full-width" disabled>Probar conexión</button>
+        <button id="connection-close" type="button" class="secondary-button full-width" data-action="close-dialog">Cerrar ajustes</button>
+      </div>
+    </form>
+    <a id="navidrome-open" class="settings-link" target="_blank" rel="noopener noreferrer" hidden>Abrir Navidrome</a>
+    <button id="connection-disconnect" type="button" class="secondary-button full-width" hidden>Cerrar sesión</button>
+    <button class="secondary-button full-width" data-action="install-help">Añadir a la pantalla de inicio</button>
+  </dialog>
+
+  <dialog id="install-dialog" class="sheet" aria-labelledby="install-title">
+    <div class="sheet-top"><span class="eyebrow">SIEMPRE A MANO</span><button class="close-button" data-action="close-dialog" aria-label="Cerrar instrucciones">×</button></div>
+    <h2 id="install-title">Tu música, un toque más cerca.</h2>
+    <ol class="install-steps"><li>Abre la dirección de MiMusica en Safari.</li><li>Toca Compartir y «Añadir a la pantalla de inicio».</li><li>Confirma el nombre y toca «Añadir».</li></ol>
+    <p class="small-copy">Mantén Tailscale conectado y usa la dirección HTTPS de MiMusica. La dirección 127.0.0.1 de la vista previa solo funciona en tu computadora.</p>
+  </dialog>
+
+  <dialog id="queue-dialog" class="sheet queue-sheet" aria-labelledby="queue-title">
+    <div class="sheet-top"><span class="eyebrow">TU SELECCIÓN</span><button class="close-button" data-action="close-dialog" aria-label="Cerrar cola">×</button></div>
+    <h2 id="queue-title">A continuación</h2>
+    <div id="queue-list"></div>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <noscript><p class="noscript">Activa JavaScript para abrir tu biblioteca de MiMusica.</p></noscript>
+</body>
+</html>
