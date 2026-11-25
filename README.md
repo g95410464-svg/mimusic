@@ -4,79 +4,139 @@
 
 # mimusic
 
-**Tu plataforma musical privada todo-en-uno, con estética tvOS, streaming sin pérdidas y descargador integrado.**
+**Tu propia app de música privada en casa, con diseño estilo Apple TV / Apple Music y descargador de canciones integrado.**
 
-[![Docker Todo-en-Uno](https://img.shields.io/badge/Docker_Compose-Todo_en_Uno-2496ED?style=flat-square&logo=docker&logoColor=white)](#inicio-rápido-en-1-minuto)
-[![Node.js](https://img.shields.io/badge/Node.js_22+-0_dependencias_npm-339933?style=flat-square&logo=nodedotjs&logoColor=white)](MiMusicaWeb/)
-[![Navidrome](https://img.shields.io/badge/Backend-Navidrome_%2F_Subsonic-FA586A?style=flat-square)](https://www.navidrome.org/)
-[![PWA](https://img.shields.io/badge/PWA-iPad_%C2%B7_iOS_%C2%B7_Android_%C2%B7_PC-000000?style=flat-square&logo=apple&logoColor=white)](#instalar-como-app-pwa)
+[![Fácil con Docker](https://img.shields.io/badge/Instalación-Fácil_paso_a_paso-2496ED?style=flat-square&logo=docker&logoColor=white)](#cómo-instalarlo-paso-a-paso-sin-saber-programar)
+[![Idioma](https://img.shields.io/badge/Interfaz-100%25_en_Español-339933?style=flat-square)](#qué-puedes-hacer-con-mimusic)
+[![Dispositivos](https://img.shields.io/badge/Funciona_en-PC_%C2%B7_iPad_%C2%B7_iPhone_%C2%B7_Android-000000?style=flat-square&logo=apple&logoColor=white)](#cómo-usarlo-en-tu-celular-o-ipad)
 
 </div>
 
 ---
 
-**mimusic** empaqueta en un solo comando todo lo necesario para montar tu propio servidor de música personal en casa o en un VPS, sin configuraciones manuales complicadas:
-
-1. **Interfaz Web / PWA inspirada en tvOS 18** — Rápida, en español, adaptable a escritorio, iPad y móvil.
-2. **Servidor Navidrome integrado** — Indexa tus álbumes, artistas, carátulas y playlists automáticamente.
-3. **Descargador en segundo plano** — Añade canciones desde la misma interfaz buscando por nombre o pegando enlaces de **YouTube** o **Spotify**.
-
 <table>
   <tr>
     <td width="50%">
       <img src="docs/screenshots/reproductor.jpg" alt="Reproductor Ahora suena en mimusic" />
-      <p align="center"><sub><b>Ahora suena</b> · Controles de cola, Aleatorio, Repetir siempre y Una vez más (+1)</sub></p>
+      <p align="center"><sub><b>Reproductor</b> · Modo aleatorio, Repetir siempre y Una vez más (+1)</sub></p>
     </td>
     <td width="50%">
       <img src="docs/screenshots/descargas.png" alt="Panel Añadir música en mimusic" />
-      <p align="center"><sub><b>Añadir música</b> · Descarga directa al servidor y escaneo con un clic</sub></p>
+      <p align="center"><sub><b>Añadir música</b> · Busca canciones o pega enlaces de YouTube / Spotify</sub></p>
     </td>
   </tr>
 </table>
 
+## ¿Qué puedes hacer con mimusic?
+
+- **Tener tu propio catálogo musical privado** sin anuncios, organizado automáticamente por álbumes, artistas, canciones y playlists (usando Navidrome por dentro).
+- **Agregar canciones desde la misma página web:** pulsas **+ Añadir música**, escribes el nombre de la canción (o pegas el link de YouTube o de una canción de Spotify) y se descarga sola a tu biblioteca con portada y título.
+- **Escuchar en cualquier pantalla:** en tu computadora, o abrirlo desde el navegador de tu **iPad, iPhone o Android** y agregarlo a tu pantalla de inicio como una aplicación.
+- **Controles completos:** reproducción continua, modo **Aleatorio**, **Repetir siempre**, **Una vez más (`+1`)** y sesión recordada por 30 días para no escribir tu contraseña cada vez.
+
 ---
 
-## Inicio rápido en 1 minuto
+## Cómo instalarlo paso a paso (sin saber programar)
 
-Solo necesitas tener **[Docker](https://www.docker.com/)** instalado (Docker Desktop en Windows/Mac o Docker Engine en Linux). **No hace falta instalar Node, Python, FFmpeg ni configurar Navidrome por separado.**
+No necesitas configurar servidores complicados ni instalar lenguajes de programación. Todo viene empacado listo para encenderse solo.
 
-### Opción A · Un solo clic
-- **Windows:** Haz doble clic en `start.bat`
-- **Linux / macOS:**
-  ```bash
-  chmod +x start.sh && ./start.sh
-  ```
+### Paso 1 · Instala Docker Desktop (solo se hace una vez)
+**Docker Desktop** es un programa gratuito que se encarga de instalar y encender todas las piezas de **mimusic** automáticamente dentro de tu computadora sin desconfigurar nada.
 
-### Opción B · Línea de comandos
+1. Entra a **[docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)** y descárgalo para Windows o Mac.
+2. Instálalo como cualquier otro programa (si te pide reiniciar la PC, reiníciala).
+3. **Abre Docker Desktop** y espera unos segundos hasta que termine de cargar (verás un ícono de una ballena abajo en tu barra de tareas). **Déjalo abierto.**
+
+---
+
+### Paso 2 · Descarga este proyecto desde GitHub
+1. Sube al principio de esta página de GitHub y haz clic en el botón verde **`<> Code`**.
+2. En el menú que se abre, haz clic en **`Download ZIP`**.
+3. Ve a tu carpeta de **Descargas**, haz **clic derecho** sobre el archivo `.zip` que bajaste y elige **`Extraer todo...`** (o descomprimir).
+   > **Importante:** Muévelo o extráelo en una carpeta normal (por ejemplo en *Documentos* o *Escritorio*). No intentes abrir los archivos desde adentro del `.zip` sin extraerlos primero.
+
+---
+
+### Paso 3 · Enciende mimusic
+
+#### Si estás en Windows:
+1. Abre la carpeta que acabas de extraer.
+2. Haz **doble clic en el archivo `start.bat`** *(en algunos Windows puede verse solo como `start`)*.
+   - *Nota: Si Windows muestra una ventana azul diciendo «Windows protegió su PC», haz clic en **Más información** y luego en **Ejecutar de todas formas**.*
+3. Se abrirá una ventana negra que empezará a descargar y preparar todo automáticamente.
+   - **La primera vez tardará entre 2 y 5 minutos** según tu internet. No cierres esa ventana hasta que aparezca el mensaje **«¡LISTO! Tu servidor mimusic ya está encendido»**.
+
+#### Si estás en Mac o Linux:
+1. Abre la aplicación **Terminal**.
+2. Escribe `sh ` (con un espacio al final), arrastra el archivo `start.sh` de la carpeta hacia la ventana de Terminal y presiona **Enter**:
+   ```bash
+   sh start.sh
+   ```
+3. Espera de 2 a 5 minutos la primera vez hasta que diga **«¡LISTO!»**.
+
+---
+
+### Paso 4 · Crea tu usuario e inicia sesión (solo la primera vez)
+
+Como el servidor es 100% tuyo y privado, primero debes inventar tu propio usuario y contraseña:
+
+1. Abre en tu navegador: **`http://localhost:4533`**
+   - Verás una pantalla de bienvenida (Navidrome). Inventa el **usuario y contraseña** que tú quieras y haz clic en crear cuenta. *(Anótalos para no olvidarlos).*
+2. Ahora ve a la pestaña de **mimusic** que se abrió sola (o entra a **`http://localhost:4173`**).
+3. Haz clic en el botón **Conectar mi biblioteca**, escribe ese mismo usuario y contraseña, pulsa **Probar conexión** y luego **Ver mi biblioteca**.
+
+¡Eso es todo! Tu cuenta quedará guardada por 30 días en ese navegador.
+
+---
+
+### Paso 5 · Empieza a ponerle música
+
+Tienes **dos formas muy fáciles** de llenar tu biblioteca:
+
+- **Opción 1 — Descargar desde la página web:**
+  1. Dentro de **mimusic**, haz clic arriba en **`+ Añadir música`**.
+  2. Escribe el nombre de una canción con su artista (ejemplo: `Daft Punk - One More Time`) o pega el enlace de un video de **YouTube** o de una canción de **Spotify**.
+  3. Haz clic en **Descargar al servidor**.
+  4. Cuando la etiqueta cambie a **Guardada**, haz clic en el botón **Actualizar biblioteca** y ya aparecerá lista para reproducir.
+
+- **Opción 2 — Copiar canciones que ya tengas en tu PC:**
+  1. Entra a la carpeta del proyecto y abre la subcarpeta llamada **`music`**.
+  2. Pega ahí adentro tus carpetas o archivos `.mp3`, `.flac` o `.m4a`.
+  3. En **mimusic**, pulsa **Actualizar** y aparecerán con sus álbumes y portadas.
+
+---
+
+## Preguntas frecuentes del día a día
+
+### ¿Cómo lo apago y cómo lo vuelvo a prender otro día?
+- **Para apagarlo:** Entra a la carpeta y haz doble clic en **`stop.bat`** (en Mac/Linux: `sh stop.sh`). Tu música, tu cuenta y tus playlists quedan guardadas intactas.
+- **Para volver a prenderlo:** Abre primero **Docker Desktop** y luego haz doble clic en **`start.bat`**. Como ya se instaló la primera vez, las siguientes veces encenderá en pocos segundos.
+
+### ¿Cómo usarlo en tu celular o iPad?
+- **Dentro de tu misma casa (mismo Wi-Fi):**
+  1. Mantén el servidor encendido en tu PC.
+  2. Mira la ventana negra que abrió `start.bat`: ahí mismo te mostrará una dirección parecida a `http://192.168.1.XX:4173`.
+  3. Escribe esa dirección en el navegador de tu celular o iPad (Safari o Chrome) e inicia sesión.
+  4. **Para tenerlo como App:** En Safari (iPhone/iPad) toca el botón **Compartir → Añadir a la pantalla de inicio**. En Android (Chrome) toca el menú **⋮ → Instalar aplicación**.
+
+- **Fuera de tu casa (con datos móviles o desde otro lugar):**
+  - Puedes conectarlo gratis y de forma privada usando **Tailscale** (sin abrir puertos peligrosos en tu módem). Tienes los pasos detallados en [esta guía opcional](MiMusicaWeb/DEPLOYMENT.md).
+
+---
+
+<details>
+<summary><b>Información técnica, arquitectura y comandos para desarrolladores (clic para desplegar)</b></summary>
+
+<br />
+
+### Instalación rápida por terminal (Git + Docker Compose)
 ```bash
 git clone https://github.com/g95410464-svg/mimusic.git
 cd mimusic
 docker compose up -d --build
 ```
 
-### Primer acceso (3 pasos)
-1. Abre **`http://localhost:4533`** una única vez para crear tu usuario administrador en Navidrome.
-2. Abre **`http://localhost:4173`** (**mimusic**), pulsa **Conectar mi biblioteca** e inicia sesión con ese usuario.
-3. **Añade tu música:**
-   - Copia tus archivos `.mp3`, `.flac`, `.m4a` u `.opus` en la carpeta `./music` de este proyecto, **o**
-   - Pulsa **+ Añadir música** dentro de **mimusic**, escribe el nombre de una canción (o pega un enlace de YouTube/Spotify) y pulsa **Actualizar biblioteca** cuando termine.
-
----
-
-## Características principales
-
-| Categoría | Qué incluye |
-| :--- | :--- |
-| **Reproductor completo** | Streaming en formato original (`raw`, soporte de rangos HTTP para adelantar al instante), mini-reproductor persistente y controles en pantalla de bloqueo (`MediaSession`). |
-| **Cola inteligente** | Reproducción continua, modo **Aleatorio** sin cortar la canción actual, **Repetir siempre** y **Una vez más (`+1`)** al estilo Spotify. |
-| **Descargador integrado** | Worker aislado con `spotDL`, `yt-dlp` y `FFmpeg` que descarga canciones individuales en MP3 (192 kbps) con metadatos y portada incrustados. |
-| **Sesión de 30 días** | Inicia sesión una sola vez por dispositivo. Tu contraseña nunca se guarda: se deriva un token Subsonic y se protege con cookie `HttpOnly`. |
-| **Ligero y seguro** | Servidor web en Node.js puro con **0 dependencias npm**, contenedores en modo solo lectura (`read_only`), sin privilegios (`cap_drop: ALL`) y validación estricta de rutas. |
-
----
-
-## Arquitectura del stack
-
+### Arquitectura del stack
 ```mermaid
 flowchart LR
     UI["Navegador / PWA (iPad, Móvil, PC)"] -->|HTTP local o HTTPS| WEB["mimusic Web (Puerto 4173)"]
@@ -87,79 +147,22 @@ flowchart LR
     MUSIC -->|Lectura automática| ND
 ```
 
----
+### Personalización avanzada (`.env`)
+No es necesario crear un archivo `.env` para uso local. Si quieres cambiar puertos, apuntar a otra unidad de disco o configurar HTTPS con Tailscale, copia `.env.example` a `.env`:
 
-## Instalar como App (PWA)
-
-Puedes usar **mimusic** desde cualquier dispositivo conectado a tu misma red Wi-Fi abriendo `http://IP_DE_TU_PC:4173`, o desde cualquier lugar con HTTPS:
-
-- **iPad / iPhone (Safari):** Abre la dirección de **mimusic** → botón **Compartir** → **Añadir a la pantalla de inicio**.
-- **Android (Chrome) / Escritorio:** Abre el menú del navegador → **Instalar aplicación**.
-
-<details>
-<summary><b>Configuración opcional (.env): cambiar carpetas, puertos o activar HTTPS fuera de casa con Tailscale</b></summary>
-
-<br />
-
-Si quieres usar una carpeta de música que ya tengas en otro disco o exponer tu servidor de forma privada por HTTPS para usarlo fuera de casa (necesario para instalar PWAs con cookies seguras en iOS fuera de `localhost`), crea un archivo `.env` a partir de la plantilla:
-
-```bash
-cp .env.example .env
-```
-
-Variables principales disponibles en `.env`:
-
-| Variable | Valor por defecto | Descripción |
+| Variable | Por defecto | Descripción |
 | :--- | :--- | :--- |
-| `PORT` | `4173` | Puerto donde abre **mimusic**. |
-| `NAVIDROME_PORT` | `4533` | Puerto del panel de administración de Navidrome. |
-| `MUSIC_DIR` | `./music` | Ruta local donde tienes tu colección musical. |
-| `DOWNLOADS_DIR` | `./music/mimusic` | Carpeta donde el worker guarda las nuevas descargas. |
-| `APP_ORIGIN` | `http://localhost:4173` | Origen público (cámbialo a `https://...` si usas Tailscale o reverse proxy). |
+| `PORT` | `4173` | Puerto del reproductor web **mimusic**. |
+| `NAVIDROME_PORT` | `4533` | Puerto del panel de Navidrome. |
+| `MUSIC_DIR` | `./music` | Carpeta local con tu colección musical. |
+| `DOWNLOADS_DIR` | `./music/mimusic` | Subcarpeta donde se guardan las descargas nuevas. |
+| `APP_ORIGIN` | `http://localhost:4173` | Origen permitido (`https://...` al usar Tailscale o proxy inverso). |
 | `NAVIDROME_PUBLIC_URL` | `http://localhost:4533` | Enlace que abre el botón «Abrir Navidrome» en ajustes. |
 
-Consulta [`MiMusicaWeb/DEPLOYMENT.md`](MiMusicaWeb/DEPLOYMENT.md) para ver los comandos exactos de publicación con **Tailscale Serve** o para conectar **mimusic** a un Navidrome que ya tengas instalado aparte.
+### Estructura del proyecto y pruebas automatizadas
+- `docker-compose.yml`: Stack unificado (`navidrome` + `mimusic` + `downloader`).
+- `MiMusicaWeb/`: Servidor Node.js 24 sin dependencias `npm`, interfaz PWA y tests (`npm run check && npm test` — 34 pruebas).
+- `MiMusicaWeb/downloader/`: Worker aislado en Python 3.13 con `spotDL`, `yt-dlp` y `FFmpeg` (`python -m unittest discover -s MiMusicaWeb/downloader -p "test_*.py"` — 3 pruebas).
+- Documentación técnica adicional: [Manual de la web y sesiones](MiMusicaWeb/README.md) · [Detalles del descargador](MiMusicaWeb/IMPORTS.md) · [Despliegue con Tailscale / Navidrome externo](MiMusicaWeb/DEPLOYMENT.md).
 
 </details>
-
----
-
-## Estructura del repositorio
-
-```text
-mimusic/
-├── docker-compose.yml        # Stack todo-en-uno (Navidrome + mimusic + Descargador)
-├── .env.example              # Plantilla opcional de variables de entorno
-├── start.bat / start.sh      # Lanzadores rápidos de 1 clic (Windows / Linux / macOS)
-├── music/                    # Carpeta por defecto para tu biblioteca y descargas
-├── MiMusicaWeb/              # Código fuente de la aplicación web, API y tests
-│   ├── public/               # Interfaz PWA (HTML, CSS, JS modular y Service Worker)
-│   ├── downloader/           # Worker aislado en Python (spotDL + yt-dlp + FFmpeg)
-│   ├── tests/                # Suite de pruebas automatizadas (Node test runner)
-│   └── compose.yaml          # Compose alternativo si ya tienes Navidrome aparte
-└── legacy/                   # Prototipo inicial pausado en SwiftUI
-```
-
----
-
-## Desarrollo local y pruebas
-
-Si quieres modificar el código de la web sin Docker (requiere **Node.js 22+**; no necesita `npm install`):
-
-```bash
-cd MiMusicaWeb
-npm run check   # Verifica sintaxis de todos los módulos
-npm test        # Ejecuta las 34 pruebas automatizadas del servidor y reproductor
-npm run dev     # Levanta mimusic en http://127.0.0.1:4173
-```
-
-Para ejecutar las pruebas unitarias del worker de descargas (requiere **Python 3.11+**):
-
-```bash
-python -m unittest discover -s MiMusicaWeb/downloader -p "test_*.py"
-```
-
-Documentación técnica detallada:
-- [Manual de la aplicación web y seguridad de sesiones](MiMusicaWeb/README.md)
-- [Funcionamiento y límites del descargador de canciones](MiMusicaWeb/IMPORTS.md)
-- [Despliegue avanzado con Tailscale HTTPS o Navidrome externo](MiMusicaWeb/DEPLOYMENT.md)
