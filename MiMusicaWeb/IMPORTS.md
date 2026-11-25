@@ -1,16 +1,16 @@
 # Añadir música al servidor
 
-En Inicio o Biblioteca, pulsa **+ Añadir música**. Escribe el título y artista, un enlace de vídeo de YouTube o el enlace de una canción de Spotify. Pulsa **Descargar al servidor**. El historial muestra En cola, Descargando, Guardada o un error con opción de reintento. La descarga continúa aunque cierres la web.
+En Inicio o Biblioteca, pulsa **+ Añadir música**. Escribe el título y artista, o pega un enlace de **canción, álbum o playlist** de **YouTube**, **YouTube Music** o **Spotify**. Pulsa **Descargar al servidor**. El historial muestra el tipo de envío, progreso en tiempo real por canción, estado completado o reintento en caso de error. La descarga continúa aunque cierres la web.
 
-Cuando aparezca **Guardada**, pulsa **Actualizar biblioteca** para iniciar un escaneo de Navidrome. Después abre Biblioteca o Buscar. Si Navidrome sigue escaneando, la pantalla lo indica y permite volver a actualizar. Si la cuenta no tiene permiso para escanear, se muestra el error; el escaneo programado de Navidrome también detecta los archivos (actualmente cada hora en este Debian).
+Cuando termine, pulsa **Actualizar biblioteca** para iniciar un escaneo de Navidrome. Los álbumes aparecerán agrupados en **Álbumes** con su carátula oficial y las playlists importarán automáticamente su archivo `.m3u` en la pestaña **Playlists**.
 
 ## Fuentes y límites
 
-- Nombre: busca la primera coincidencia en YouTube; incluir el artista reduce errores. Revisa la canción obtenida.
-- YouTube: descarga el vídeo concreto y convierte su audio a MP3.
-- Spotify: spotDL obtiene metadatos y busca una coincidencia en YouTube. No extrae el audio de Spotify y la versión encontrada puede diferir.
-- Solo canciones individuales; no se importan playlists, álbumes, emisiones en vivo ni URLs arbitrarias.
-- Hasta 20 minutos y 100 MB por canción, diez trabajos pendientes y un trabajo simultáneo. El tiempo máximo de una descarga es diez minutos.
+- **Nombre:** busca la primera coincidencia en YouTube; incluir el artista reduce errores.
+- **Canciones individuales (YouTube / Spotify):** descarga el audio en MP3 (192 kbps) con metadatos y portada incrustados.
+- **Álbumes completos (Spotify / YouTube Music):** obtiene todas las pistas (hasta 100 por envío), descarga una por una sin llenar la memoria temporal, estampa número de pista, álbum, artista y portada oficial, y las organiza en `Albums/`.
+- **Playlists (Spotify / YouTube / YouTube Music):** descarga hasta 100 canciones disponibles por envío en `Playlists/`, continúa con el resto si alguna pista no está disponible y genera automáticamente un archivo `.m3u` para que Navidrome cree la playlist con el mismo orden.
+- Hasta 30 minutos y 100 MB por canción individual, diez envíos pendientes en cola y procesamiento progresivo pista por pista.
 - No se usan cuentas o cookies de YouTube/Spotify ni se eluden DRM, accesos privados o comprobaciones de inicio de sesión. Si la fuente exige acceso adicional, se muestra un error.
 - Los archivos quedan en la subcarpeta de descargas configurada (`./music/mimusic` por defecto, o `DOWNLOADS_DIR`) y se añaden completos tras validarlos con FFprobe, sin modificar el resto de tus carpetas musicales.
 - Una solicitud ya pendiente o completada no se repite durante los 30 días de historial. Una solicitud fallida puede reenviarse. La limpieza del historial no elimina canciones.

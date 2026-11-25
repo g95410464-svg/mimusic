@@ -24,6 +24,8 @@ id_ed25519*
 *.aac
 *.wma
 *.wav
+*.m3u
+*.m3u8
 *.partial
 .DS_Store
 Thumbs.db

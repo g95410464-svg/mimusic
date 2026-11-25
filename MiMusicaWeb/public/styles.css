@@ -317,10 +317,14 @@ a.secondary-button { display: inline-flex; align-items: center; justify-content:
 .import-status { min-height: 64px; padding: 18px 0; color: #c4d8c8; line-height: 1.5; }
 .import-status.error { color: #ffb7b7; }
 .import-job { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 22px; margin-bottom: 12px; background: #ffffff08; border: 1px solid #ffffff14; border-radius: 16px; }
-.import-job > div { min-width: 0; }
-.import-job strong { overflow-wrap: anywhere; }
-.import-job p { color: #b7b7c1; line-height: 1.5; margin: 10px 0; }
+.import-job > div { min-width: 0; flex: 1; }
+.import-kind { display: inline-block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #ff6c87; margin-bottom: 4px; font-weight: 600; }
+.import-job strong { display: block; overflow-wrap: anywhere; }
+.import-job p { color: #b7b7c1; line-height: 1.5; margin: 8px 0; }
+.import-progress { height: 6px; border-radius: 999px; background: #ffffff18; overflow: hidden; margin-top: 8px; max-width: 420px; }
+.import-progress > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #fa2d48, #ff7a8a); transition: width .35s ease; }
 .import-badge { flex-shrink: 0; border-radius: 18px; padding: 7px 12px; font-size: 12px; background: #ffffff16; }
+.import-badge[data-status="downloading"] { background: #3b2430; color: #ffcad4; }
 .import-badge[data-status="completed"] { background: #234d35; color: #c5f4d6; }
 .import-badge[data-status="failed"] { background: #532b32; color: #ffd3db; }
 @media (max-width: 700px) { .import-input-row { flex-direction: column; } .import-job { flex-direction: column-reverse; gap: 10px; } .heading-actions { justify-content: flex-start; } .page-heading:has(.heading-actions) { align-items: flex-start; gap: 18px; flex-wrap: wrap; } }

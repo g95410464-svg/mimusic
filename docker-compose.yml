@@ -19,6 +19,8 @@ services:
       ND_SCANSCHEDULE: 15m
       ND_LOGLEVEL: info
       ND_SESSIONTIMEOUT: 24h
+      ND_AUTOIMPORTPLAYLISTS: "true"
+      ND_DEFAULTPLAYLISTPUBLICVISIBILITY: "true"
     volumes:
       - navidrome_data:/data
       - ${MUSIC_DIR:-./music}:/music:ro

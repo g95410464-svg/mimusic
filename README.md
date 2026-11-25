@@ -6,7 +6,7 @@
 
 **Tu propia app de música privada en casa, con diseño estilo Apple TV / Apple Music y descargador de canciones integrado.**
 
-[![Fácil con Docker](https://img.shields.io/badge/Instalación-Fácil_paso_a_paso-2496ED?style=flat-square&logo=docker&logoColor=white)](#cómo-instalarlo-paso-a-paso-sin-saber-programar)
+[![Fácil con Docker](https://img.shields.io/badge/Instalación-Fácil_paso_a_paso-2496ED?style=flat-square&logo=docker&logoColor=white)](#cómo-instalarlo-paso-a-paso)
 [![Idioma](https://img.shields.io/badge/Interfaz-100%25_en_Español-339933?style=flat-square)](#qué-puedes-hacer-con-mimusic)
 [![Dispositivos](https://img.shields.io/badge/Funciona_en-PC_%C2%B7_iPad_%C2%B7_iPhone_%C2%B7_Android-000000?style=flat-square&logo=apple&logoColor=white)](#cómo-usarlo-en-tu-celular-o-ipad)
 
@@ -30,7 +30,7 @@
 ## ¿Qué puedes hacer con mimusic?
 
 - **Tener tu propio catálogo musical privado** sin anuncios, organizado automáticamente por álbumes, artistas, canciones y playlists (usando Navidrome por dentro).
-- **Agregar canciones desde la misma página web:** pulsas **+ Añadir música**, escribes el nombre de la canción (o pegas el link de YouTube o de una canción de Spotify) y se descarga sola a tu biblioteca con portada y título.
+- **Agregar canciones, álbumes o playlists desde la misma web:** pulsas **+ Añadir música**, escribes el nombre de una canción o pegas el enlace de **una canción, un álbum completo o una playlist** de **YouTube**, **YouTube Music** o **Spotify**, y todo se descarga solo a tu biblioteca con portadas y listas armadas.
 - **Escuchar en cualquier pantalla:** en tu computadora, o abrirlo desde el navegador de tu **iPad, iPhone o Android** y agregarlo a tu pantalla de inicio como una aplicación.
 - **Controles completos:** reproducción continua, modo **Aleatorio**, **Repetir siempre**, **Una vez más (`+1`)** y sesión recordada por 30 días para no escribir tu contraseña cada vez.
 
@@ -93,11 +93,11 @@ Como el servidor es 100% tuyo y privado, primero debes inventar tu propio usuari
 
 Tienes **dos formas muy fáciles** de llenar tu biblioteca:
 
-- **Opción 1 — Descargar desde la página web:**
+- **Opción 1 — Descargar canciones, álbumes o playlists desde la página web:**
   1. Dentro de **mimusic**, haz clic arriba en **`+ Añadir música`**.
-  2. Escribe el nombre de una canción con su artista (ejemplo: `Daft Punk - One More Time`) o pega el enlace de un video de **YouTube** o de una canción de **Spotify**.
-  3. Haz clic en **Descargar al servidor**.
-  4. Cuando la etiqueta cambie a **Guardada**, haz clic en el botón **Actualizar biblioteca** y ya aparecerá lista para reproducir.
+  2. Escribe el nombre de una canción con su artista (ejemplo: `Daft Punk - One More Time`) o pega el enlace de **una canción, un álbum completo o una playlist** de **Spotify**, **YouTube** o **YouTube Music**.
+  3. Haz clic en **Descargar al servidor** (verás una barra de progreso canción por canción si es un álbum o playlist).
+  4. Cuando termine, haz clic en **Actualizar biblioteca**: los álbumes aparecerán en **Álbumes** con su portada y las playlists aparecerán armadas en **Playlists**.
 
 - **Opción 2 — Copiar canciones que ya tengas en tu PC:**
   1. Entra a la carpeta del proyecto y abre la subcarpeta llamada **`music`**.
