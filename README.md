@@ -36,11 +36,11 @@
 
 ---
 
-## Cómo instalarlo paso a paso (sin saber programar)
+## Cómo instalarlo paso a paso 
 
 No necesitas configurar servidores complicados ni instalar lenguajes de programación. Todo viene empacado listo para encenderse solo.
 
-### Paso 1 · Instala Docker Desktop (solo se hace una vez)
+### Paso 1 · Instala Docker Desktop 
 **Docker Desktop** es un programa gratuito que se encarga de instalar y encender todas las piezas de **mimusic** automáticamente dentro de tu computadora sin desconfigurar nada.
 
 1. Entra a **[docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)** y descárgalo para Windows o Mac.
