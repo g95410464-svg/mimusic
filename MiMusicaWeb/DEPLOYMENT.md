@@ -1,6 +1,6 @@
 # mimusic en Debian
 
-Estado de esta entrega: versión 0.6.1 publicada, service worker v9, HTTPS con respuesta HTTP 200 y contenedor saludable. Incluye aleatorio y reproducción continua de la cola, verificados en navegador con audio local de prueba. El propietario confirmó previamente biblioteca real, reproducción y sesión conservada al recargar. Pendiente comprobar el comportamiento con el iPad bloqueado y AirPods.
+Estado de esta entrega: versión 0.7.0 publicada y verificada por HTTPS el 25 de noviembre de 2026, service worker v10. Incluye «Repetir siempre» y «Una vez más» en Ahora suena. Incluye aleatorio y reproducción continua de la cola, verificados en navegador con audio local de prueba. El propietario confirmó previamente biblioteca real, reproducción y sesión conservada al recargar. Pendiente comprobar el comportamiento con el iPad bloqueado y AirPods.
 
 ## Servicios
 
@@ -44,7 +44,7 @@ El comando añade el puerto 8443 sin sustituir el servicio de Navidrome en 443. 
 4. Comprobar que aparece **Conectado** y pulsar **Ver mi biblioteca**. Tocar el título de una canción propia y comprobar play/pausa. Abrir **Ahora suena** para mover la posición y cambiar de canción. Si aún no existe un administrador de Navidrome, crearlo desde su página original.
 5. En Safari, **Compartir → Añadir a la pantalla de inicio**.
 
-La biblioteca, búsqueda y audio utilizan Navidrome. Tras actualizar, abrir `https://debian.tailfd03e7.ts.net:8443/?v=9`; en la computadora se puede recargar con Ctrl+F5. La sesión guardada se recupera automáticamente durante 30 días, incluso después de reiniciar mimusic. «Cerrar sesión» revoca el acceso de ese navegador. En Inicio aparece «Reproducir aleatoriamente» y en Ahora suena, «Aleatorio». Al finalizar la pista se reproduce la siguiente; al terminar la cola comienza otra vuelta. La música se sirve en su formato original. Los controles de pantalla de bloqueo se registran mediante Media Session, pero deben probarse en el iPad físico. No hay descargas offline.
+La biblioteca, búsqueda y audio utilizan Navidrome. Tras actualizar, abrir `https://debian.tailfd03e7.ts.net:8443/?v=10`; en la computadora se puede recargar con Ctrl+F5. La sesión guardada se recupera automáticamente durante 30 días, incluso después de reiniciar mimusic. «Cerrar sesión» revoca el acceso de ese navegador. En Inicio aparece «Reproducir aleatoriamente» y en Ahora suena, «Aleatorio». Al finalizar la pista se reproduce la siguiente; al terminar la cola comienza otra vuelta. La música se sirve en su formato original. Los controles de pantalla de bloqueo se registran mediante Media Session, pero deben probarse en el iPad físico. No hay descargas offline.
 
 El equipo Debian debe permanecer encendido y despierto, y ambos dispositivos deben tener Tailscale conectado. Si Debian es la laptop que se apaga o suspende, la música deja de estar disponible aunque la interfaz siga apareciendo desde su caché.
 
@@ -66,3 +66,5 @@ Antes de publicar el audio se guardó `/home/neo/mimusica-backups/pre-audio.tar.
 Antes de publicar las sesiones se guardó `/home/neo/mimusica-backups/pre-persistent-session.tar.gz`, que también contiene `Dockerfile`, `compose.yaml` y `.dockerignore` de la versión anterior. Ninguna copia del código incluye la base de sesiones.
 
 Antes de publicar aleatorio y reproducción continua se guardó `/home/neo/mimusica-backups/pre-shuffle.tar.gz` con `public/` y `package.json`. El despliegue conserva el volumen de sesiones y la configuración de Navidrome.
+
+Antes de publicar la repetición se guardó /home/neo/mimusica-backups/pre-repeat-20261125.tar.gz con la interfaz y documentación anteriores. El contenedor está saludable y conserva las sesiones.

@@ -17,6 +17,40 @@ class AudioStub extends EventTarget {
 const songs = [{ id: 'a', title: 'Primera', duration: 120 }, { id: 'b', title: 'Segunda', duration: 120 }];
 const fakeClient = { streamURL: id => `/test/${id}` };
 
+test('repetir siempre conserva la misma canción y al desactivarlo continúa la cola', async () => {
+  const audio = new AudioStub(), player = new MusicPlayer(fakeClient, { audio, mediaSession: null });
+  await player.playSong(songs[0], songs); audio.currentTime = 42;
+  player.toggleRepeat('one');
+  assert.equal(audio.currentTime, 42); assert.equal(player.isPlaying, true);
+  for (let i = 0; i < 3; i++) {
+    audio.dispatchEvent(new Event('ended'));
+    assert.equal(player.currentSong.id, 'a'); assert.equal(player.repeatMode, 'one');
+  }
+  player.toggleRepeat('one'); audio.dispatchEvent(new Event('ended'));
+  assert.equal(player.currentSong.id, 'b'); assert.equal(player.repeatMode, 'off');
+});
+
+test('una vez más se consume una sola vez, incluso con aleatorio activo', async () => {
+  const audio = new AudioStub(), player = new MusicPlayer(fakeClient, { audio, mediaSession: null, shuffled: true });
+  await player.playSong(songs[0], songs); player.toggleRepeat('once');
+  audio.dispatchEvent(new Event('ended'));
+  assert.equal(player.currentSong.id, 'a'); assert.equal(player.repeatMode, 'off');
+  audio.dispatchEvent(new Event('ended'));
+  assert.equal(player.currentSong.id, 'b'); assert.equal(player.isPlaying, true);
+});
+
+test('los modos de repetición son excluyentes y cambiar de canción cancela una vez más', async () => {
+  const audio = new AudioStub(), player = new MusicPlayer(fakeClient, { audio, mediaSession: null });
+  player.toggleRepeat('one'); assert.equal(player.repeatMode, 'off');
+  await player.playSong(songs[0], songs);
+  player.toggleRepeat('one'); player.toggleRepeat('once'); assert.equal(player.repeatMode, 'once');
+  player.pause(); assert.equal(player.repeatMode, 'once'); assert.equal(player.isPlaying, false);
+  await player.next(); assert.equal(player.repeatMode, 'off'); assert.equal(player.currentSong.id, 'b');
+  player.toggleRepeat('once'); await player.playAt(0); assert.equal(player.repeatMode, 'off');
+  player.toggleRepeat('one'); await player.next(); assert.equal(player.currentSong.id, 'b');
+  player.stop(); assert.equal(player.repeatMode, 'off'); assert.equal(player.currentSong, null);
+});
+
 test('reproduce, pausa, mueve la posición y continúa al llegar al final de la cola', async () => {
   const audio = new AudioStub(), player = new MusicPlayer(fakeClient, { audio, mediaSession: null });
   await player.playSong(songs[0], songs);

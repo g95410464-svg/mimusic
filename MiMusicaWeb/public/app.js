@@ -7,6 +7,7 @@ function savedShuffle() { try { return localStorage.getItem('mimusica.shuffle') 
 const player = new MusicPlayer(client, { audio: document.querySelector('#audio-player') || new Audio(), shuffled: savedShuffle() });
 function saveShuffle() { try { localStorage.setItem('mimusica.shuffle', String(player.isShuffled)); } catch { /* La preferencia es opcional en modo privado. */ } }
 const shuffleControl = '<button class="shuffle-button shuffle-toggle" data-action="shuffle" aria-label="Reproducción aleatoria" aria-pressed="false"><img src="/assets/shuffle.svg" width="22" height="22" alt="">Aleatorio</button>';
+const repeatControls = '<div class="repeat-controls" role="group" aria-label="Repetir esta canción"><button class="repeat-button" data-action="repeat-one" aria-pressed="false" title="Repite esta canción hasta que lo desactives"><img src="/assets/repeat.svg" width="20" height="20" alt="">Repetir siempre</button><button class="repeat-button" data-action="repeat-once" aria-pressed="false" title="La repite una vez y después continúa la cola"><span aria-hidden="true">+1</span>Una vez más</button></div>';
 const state = { albums: [], artists: [], songs: [], playlists: [], loading: false, restoring: true, error: '', library: 'albums',
   search: '', searchType: 'all', results: { songs: [], albums: [], artists: [] }, searchLoading: false, searchError: '',
   backStack: [], details: new Map(), detailLoading: '', detailError: '', generation: 0 };
@@ -50,7 +51,7 @@ function details(kind, id) {
 function playerPage() {
   const song = player.currentSong;
   if (!song) return empty('Elige tu primera canción', 'Toca una canción de tu biblioteca o de los resultados de búsqueda para reproducirla.', '<a class="primary-button" href="#biblioteca">Abrir biblioteca</a>');
-  return `<section class="player-page"><p class="player-context">AHORA SUENA</p>${photo(song, 'player-art')}<div class="player-title"><h1>${esc(song.title)}</h1><p>${esc(song.artist || '')} · ${esc(song.album || '')}</p></div><div class="player-controls"><button class="icon-button" data-action="previous" aria-label="Canción anterior"><span class="skip-icon previous" aria-hidden="true"></span></button><button class="play-button" data-action="play" aria-label="Reproducir"><span class="play-icon" aria-hidden="true"></span></button><button class="icon-button" data-action="next" aria-label="Siguiente canción"><span class="skip-icon" aria-hidden="true"></span></button></div><p id="playback-message" class="playback-message" role="status" aria-live="polite"></p><div class="player-bottom"><input class="scrubber" type="range" id="position" min="0" max="${player.duration}" value="${player.currentTime}" step="0.1" aria-label="Posición de reproducción"><div class="time-labels"><span id="elapsed">${time(player.currentTime)}</span><span id="remaining">−${time(player.duration - player.currentTime)}</span></div><div class="player-options">${shuffleControl}<span id="playback-mode" class="playback-mode">Reproducción continua</span><button class="icon-button" data-action="queue" aria-label="Ver cola"><img class="figma-icon" src="/assets/imgList.svg" alt=""></button></div></div></section>`;
+  return `<section class="player-page"><p class="player-context">AHORA SUENA</p>${photo(song, 'player-art')}<div class="player-title"><h1>${esc(song.title)}</h1><p>${esc(song.artist || '')} · ${esc(song.album || '')}</p></div><div class="player-controls"><button class="icon-button" data-action="previous" aria-label="Canción anterior"><span class="skip-icon previous" aria-hidden="true"></span></button><button class="play-button" data-action="play" aria-label="Reproducir"><span class="play-icon" aria-hidden="true"></span></button><button class="icon-button" data-action="next" aria-label="Siguiente canción"><span class="skip-icon" aria-hidden="true"></span></button></div>${repeatControls}<p id="playback-message" class="playback-message" role="status" aria-live="polite"></p><div class="player-bottom"><input class="scrubber" type="range" id="position" min="0" max="${player.duration}" value="${player.currentTime}" step="0.1" aria-label="Posición de reproducción"><div class="time-labels"><span id="elapsed">${time(player.currentTime)}</span><span id="remaining">−${time(player.duration - player.currentTime)}</span></div><div class="player-options">${shuffleControl}<span id="playback-mode" class="playback-mode">Reproducción continua</span><button class="icon-button" data-action="queue" aria-label="Ver cola"><img class="figma-icon" src="/assets/imgList.svg" alt=""></button></div></div></section>`;
 }
 function searchPage() {
   return `${heading('Encuentra tu música')}<label class="search-field"><img class="figma-icon" src="/assets/imgMagnifyingglass2.svg" alt=""><input id="search-input" type="search" aria-label="Buscar canciones, álbumes o artistas" placeholder="Canciones, álbumes, artistas…" autocomplete="off" value="${esc(state.search)}"><button class="clear-search" data-action="clear-search" aria-label="Borrar búsqueda">×</button></label><div class="filter-chips" aria-label="Tipo de resultado">${[['all', 'Todo'], ['songs', 'Canciones'], ['albums', 'Álbumes'], ['artists', 'Artistas']].map(([key, name]) => `<button class="chip" data-action="search-filter" data-id="${key}" aria-pressed="${state.searchType === key}">${name}</button>`).join('')}</div><div id="search-results" aria-live="polite">${resultsHTML()}</div>`;
@@ -171,8 +172,10 @@ function syncPlayer() {
   const song = player.currentSong, mini = document.querySelector('.mini-player');
   mini.hidden = !song;
   document.querySelectorAll('[data-action="shuffle"]').forEach(button => button.setAttribute('aria-pressed', String(player.isShuffled)));
+  document.querySelectorAll('[data-action="repeat-one"]').forEach(button => button.setAttribute('aria-pressed', String(player.repeatMode === 'one')));
+  document.querySelectorAll('[data-action="repeat-once"]').forEach(button => button.setAttribute('aria-pressed', String(player.repeatMode === 'once')));
   const mode = document.querySelector('#playback-mode');
-  if (mode) mode.textContent = `${player.isShuffled ? 'Aleatorio' : 'En orden'} · Reproducción continua`;
+  if (mode) mode.textContent = player.repeatMode === 'one' ? 'Esta canción se repite hasta que lo desactives' : player.repeatMode === 'once' ? 'Sonará una vez más y después seguirá la cola' : `${player.isShuffled ? 'Aleatorio' : 'En orden'} · Reproducción continua`;
   if (!song) return;
   document.querySelector('#mini-title').textContent = song.title;
   document.querySelector('#mini-artist').textContent = song.artist || 'Artista desconocido';
@@ -236,6 +239,10 @@ document.addEventListener('click', event => {
   }
   else if (action === 'play-selection') { const songs = contextSongs(); if (songs.length) player.playSong(songs[0], songs); }
   else if (action === 'shuffle') { player.toggleShuffle(); saveShuffle(); toast(player.isShuffled ? 'Reproducción aleatoria activada.' : 'Reproducción en orden.'); }
+  else if (action === 'repeat-one' || action === 'repeat-once') {
+    player.toggleRepeat(action === 'repeat-one' ? 'one' : 'once');
+    toast(player.repeatMode === 'one' ? 'Esta canción se repetirá hasta que lo desactives.' : player.repeatMode === 'once' ? 'La canción sonará una vez más y después seguirá la cola.' : 'Repetición de canción desactivada.');
+  }
   else if (action === 'shuffle-library' || action === 'shuffle-selection') { player.playRandom(action === 'shuffle-library' ? state.songs : contextSongs()); saveShuffle(); }
   else if (action === 'play') player.toggle();
   else if (action === 'next') player.next();

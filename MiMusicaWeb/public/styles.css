@@ -151,6 +151,11 @@ h2 { font-size: clamp(23px, 2vw, 30px); letter-spacing: -.7px; line-height: 1.25
 .shuffle-toggle { display: inline-flex; align-items: center; gap: 10px; padding: 10px 15px; border-radius: 22px; min-height: 44px; }
 .playback-mode { color: var(--secondary); font-size: 13px; text-align: center; }
 .quick-play { margin-bottom: 22px; }
+.repeat-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.repeat-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 10px 16px; border: 1px solid #ffffff30; border-radius: 24px; color: #fff; }
+.repeat-button:hover { background: #ffffff13; }
+.repeat-button[aria-pressed="true"] { background: #ffffff28; border-color: #ffffffa0; }
+.repeat-button > span { font-size: 15px; font-weight: 700; }
 .mini-play { background: #ffffff10; width: 48px; height: 48px; }
 .play-icon { display: inline-block; width: 0; height: 0; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 14px solid white; margin-left: 3px; }
 .pause-icon { display: inline-block; width: 16px; height: 20px; border-left: 5px solid white; border-right: 5px solid white; }

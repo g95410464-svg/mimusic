@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mimusic-design-v9';
+const CACHE_NAME = 'mimusic-design-v10';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/player.js', '/library-client.js', '/connection.js', '/subsonic-auth.js', '/manifest.webmanifest', '/assets/icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

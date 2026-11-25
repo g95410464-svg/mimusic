@@ -12,6 +12,7 @@ export class MusicPlayer extends EventTarget {
   isLoading = false;
   error = '';
   isShuffled = false;
+  repeatMode = 'off';
   #orderedQueue = [];
   #random;
   #audio;
@@ -35,7 +36,10 @@ export class MusicPlayer extends EventTarget {
     });
     audio.addEventListener('ended', () => {
       this.isPlaying = false;
-      if (this.queue.length) this.next();
+      if (this.currentSong && this.repeatMode !== 'off') {
+        if (this.repeatMode === 'once') this.repeatMode = 'off';
+        this.#start(this.index);
+      } else if (this.queue.length) this.next();
       else { this.isLoading = false; this.#emit(); }
     });
     const handlers = { play: () => this.resume(), pause: () => this.pause(), nexttrack: () => this.next(), previoustrack: () => this.previous(),
@@ -58,6 +62,7 @@ export class MusicPlayer extends EventTarget {
   }
   playSong(song, queue = [song]) {
     if (!song?.id) return;
+    this.#cancelOneMore();
     this.queue = (queue.length ? queue : [song]).map(item => ({ ...item }));
     this.index = this.queue.findIndex(item => item.id === song.id);
     if (this.index < 0) { this.queue.unshift(song); this.index = 0; }
@@ -69,7 +74,7 @@ export class MusicPlayer extends EventTarget {
     }
     return this.#start(this.index);
   }
-  playAt(index) { if (Number.isInteger(index) && index >= 0 && index < this.queue.length) return this.#start(index); }
+  playAt(index) { if (Number.isInteger(index) && index >= 0 && index < this.queue.length) { this.#cancelOneMore(); return this.#start(index); } }
   playRandom(queue) {
     if (!queue.length) return;
     this.isShuffled = true;
@@ -92,6 +97,12 @@ export class MusicPlayer extends EventTarget {
     }
     this.#emit('queue');
   }
+  toggleRepeat(mode) {
+    if (!this.currentSong || !['one', 'once'].includes(mode)) return;
+    this.repeatMode = this.repeatMode === mode ? 'off' : mode;
+    this.#emit();
+  }
+  #cancelOneMore() { if (this.repeatMode === 'once') this.repeatMode = 'off'; }
   async #start(index) {
     const version = ++this.#version;
     this.index = index; this.currentSong = this.queue[index];
@@ -122,6 +133,7 @@ export class MusicPlayer extends EventTarget {
   toggle() { return this.#audio.paused ? this.resume() : this.pause(); }
   next() {
     if (!this.queue.length || this.index < 0) return;
+    this.#cancelOneMore();
     if (this.index < this.queue.length - 1) return this.#start(this.index + 1);
     if (this.isShuffled) {
       this.queue = this.#shuffle(this.#orderedQueue);
@@ -133,7 +145,10 @@ export class MusicPlayer extends EventTarget {
     }
     return this.#start(0);
   }
-  previous() { if (this.currentTime > 3 || this.index === 0) this.seek(0); else if (this.index > 0) return this.#start(this.index - 1); }
+  previous() {
+    if (this.currentTime > 3 || this.index === 0) this.seek(0);
+    else if (this.index > 0) { this.#cancelOneMore(); return this.#start(this.index - 1); }
+  }
   seek(seconds) {
     if (!Number.isFinite(seconds) || !this.currentSong) return;
     try { this.#audio.currentTime = Math.max(0, Math.min(seconds, this.duration)); this.#position(); this.#emit('time'); } catch { /* El audio aún no tiene metadatos para mover la posición. */ }
@@ -142,6 +157,7 @@ export class MusicPlayer extends EventTarget {
   stop() {
     this.#version++; this.currentSong = null; this.queue = []; this.index = -1;
     this.#orderedQueue = [];
+    this.repeatMode = 'off';
     this.#audio.pause(); this.#audio.removeAttribute('src'); this.#audio.load();
     this.error = ''; this.isLoading = false; this.isPlaying = false;
     if (this.#media) { this.#media.metadata = null; try { this.#media.setPositionState?.(); } catch { /* Opcional. */ } }
