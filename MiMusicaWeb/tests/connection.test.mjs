@@ -34,9 +34,11 @@ test('decodifica ping correcto, errores de credenciales y respuestas mal formada
   for (const value of [null, {}, { 'subsonic-response': {} }]) assert.throws(() => decodeResponse(value), { kind: 'decoding' });
 });
 
-test('el servidor acepta HTTPS y HTTP solo hacia loopback', () => {
+test('el servidor acepta HTTPS y HTTP privado/local (loopback, Docker o LAN) y rechaza HTTP público', () => {
   assert.equal(validateServerURL('https://music.example/navidrome').pathname, '/navidrome/');
   assert.equal(validateServerURL('http://127.0.0.1:4533').port, '4533');
+  assert.equal(validateServerURL('http://navidrome:4533').hostname, 'navidrome');
+  assert.equal(validateServerURL('http://192.168.1.50:4533').hostname, '192.168.1.50');
   for (const url of ['http://music.example', 'https://user:pass@music.example', 'file:///etc/passwd', 'https://music.example?token=secret']) {
     assert.throws(() => validateServerURL(url), { kind: 'invalidURL' });
   }
@@ -84,7 +86,7 @@ test('API de mimusic prueba credenciales sin cachearlas ni permitir formularios 
   const base = `http://127.0.0.1:${server.address().port}`;
   const config = await fetch(`${base}/api/config`);
   assert.equal(config.headers.get('cache-control'), 'no-store');
-  assert.equal((await config.json()).serverURL, 'https://debian.tailfd03e7.ts.net');
+  assert.equal((await config.json()).serverURL, 'http://127.0.0.1:4533');
   const body = JSON.stringify(createAuth('correcto', 'password'));
   const post = (headers = {}, data = body) => fetch(`${base}/api/connection`, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base, ...headers }, body: data });
   const success = await post();

@@ -1,13 +1,13 @@
-# mimusic Web
+# mimusic Web · Manual técnico
 
-Web app privada para Navidrome, con interfaz en español inspirada en tvOS y sin dependencias npm.
+Aplicación web progresiva (PWA) para Navidrome / Subsonic, con interfaz en español inspirada en tvOS y cero dependencias `npm`.
 
-**Dirección privada:** https://debian.tailfd03e7.ts.net:8443/ — requiere Tailscale conectado.
+> Para instrucciones de instalación en 1 minuto con Docker Compose, consulta el [`README.md` principal](../README.md).
 
 ## Acceso y biblioteca real
 
-1. Abrir mimusic y pulsar **Conectar mi biblioteca**, o el botón de perfil.
-2. Introducir las credenciales de **Navidrome**, que pueden ser distintas del usuario SSH `neo`.
+1. Abrir **mimusic** (`http://localhost:4173` en local o tu URL HTTPS privada) y pulsar **Conectar mi biblioteca**, o el botón de perfil.
+2. Introducir las credenciales de tu cuenta de **Navidrome** (si es tu primera vez, pulsa **Abrir Navidrome** para crear tu usuario administrador).
 3. Pulsar **Probar conexión** y luego **Ver mi biblioteca**.
 4. Recorrer Inicio, Biblioteca, Playlists o Buscar.
 
@@ -77,4 +77,4 @@ Las pruebas de sesiones verifican expiración, revocación persistente, cookies 
 
 Referencia: [tvOS 18 UI Kit](https://www.figma.com/design/POFwU5kU6Clk9is7n8P5TB/tvOS-18-UI-Kit--Community-?node-id=5-8298), pantallas Home `2852:2124`, Now Playing `2855:2248` y Library `2883:2770`. Se conservan la navegación en cápsula, el fondo difuminado y el estilo de tarjetas. El nombre y el icono de mimusic son propios. Los recursos decorativos del kit permanecen locales; las portadas de la biblioteca se descargan de Navidrome.
 
-Las fuentes Swift de la carpeta hermana `MiMusica/` son trabajo previo pausado, no forman parte de la web y no se han validado con Xcode.
+Las fuentes Swift en `legacy/ios-swift-prototype/` corresponden a un prototipo inicial pausado y no forman parte de la aplicación web.

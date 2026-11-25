@@ -1,28 +1,59 @@
+# Despliegue para conectar mimusic a una instancia existente de Navidrome.
+# Si quieres instalar TODO junto desde cero (Navidrome + mimusic + Descargador),
+# usa el docker-compose.yml de la raíz del repositorio.
+
 services:
   mimusica:
     build: .
     restart: unless-stopped
     network_mode: host
     environment:
-      HOST: 127.0.0.1
-      PORT: 4173
-      NAVIDROME_URL: http://127.0.0.1:4533
-      NAVIDROME_PUBLIC_URL: https://debian.tailfd03e7.ts.net
-      APP_ORIGIN: https://debian.tailfd03e7.ts.net:8443
+      HOST: ${HOST:-127.0.0.1}
+      PORT: ${PORT:-4173}
+      NAVIDROME_URL: ${NAVIDROME_URL:-http://127.0.0.1:4533}
+      NAVIDROME_PUBLIC_URL: ${NAVIDROME_PUBLIC_URL:-http://localhost:4533}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:4173}
       SESSION_STORE_PATH: /app/data/sessions.json
+      IMPORT_STORE_PATH: /app/imports
     volumes:
       - sessions:/app/data
+      - ./import-data:/app/imports
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     pids_limit: 100
     mem_limit: 256m
     healthcheck:
-      test: [CMD, node, -e, "fetch('http://127.0.0.1:4173/api/config').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:'+(process.env.PORT||4173)+'/api/config').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  downloader:
+    build: ./downloader
+    restart: unless-stopped
+    init: true
+    environment:
+      IMPORT_STORE_PATH: /jobs
+      MUSIC_PATH: /music
+    volumes:
+      - ./import-data:/jobs
+      - ${DOWNLOADS_DIR:-../music/mimusic}:/music
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 768m
+    cpus: 1.0
+    healthcheck:
+      test: [CMD, python, -c, "import pathlib,time; raise SystemExit(0 if time.time()*1000-float(pathlib.Path('/jobs/heartbeat').read_text())<15000 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
 volumes:
   sessions:

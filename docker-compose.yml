@@ -1,0 +1,90 @@
+# ============================================================================
+# mimusic · Stack Todo-en-Uno (Navidrome + Reproductor Web + Descargador)
+# ============================================================================
+# Inicio rápido (no requiere editar ningún archivo):
+#   docker compose up -d --build
+#
+# Luego abre:
+#   - mimusic (Reproductor):   http://localhost:4173
+#   - Navidrome (Crear cuenta): http://localhost:4533
+# ============================================================================
+
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    restart: unless-stopped
+    ports:
+      - "${NAVIDROME_BIND:-0.0.0.0}:${NAVIDROME_PORT:-4533}:4533"
+    environment:
+      ND_SCANSCHEDULE: 15m
+      ND_LOGLEVEL: info
+      ND_SESSIONTIMEOUT: 24h
+    volumes:
+      - navidrome_data:/data
+      - ${MUSIC_DIR:-./music}:/music:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4533/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  mimusic:
+    build: ./MiMusicaWeb
+    restart: unless-stopped
+    depends_on:
+      - navidrome
+    ports:
+      - "${APP_BIND:-0.0.0.0}:${PORT:-4173}:4173"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4173
+      NAVIDROME_URL: ${NAVIDROME_URL:-http://navidrome:4533}
+      NAVIDROME_PUBLIC_URL: ${NAVIDROME_PUBLIC_URL:-http://localhost:4533}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:4173}
+      SESSION_STORE_PATH: /app/data/sessions.json
+      IMPORT_STORE_PATH: /app/imports
+    volumes:
+      - mimusic_sessions:/app/data
+      - mimusic_imports:/app/imports
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4173/api/config').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  downloader:
+    build: ./MiMusicaWeb/downloader
+    restart: unless-stopped
+    init: true
+    environment:
+      IMPORT_STORE_PATH: /jobs
+      MUSIC_PATH: /music
+    volumes:
+      - mimusic_imports:/jobs
+      - ${DOWNLOADS_DIR:-./music/mimusic}:/music
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 768m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "python", "-c", "import pathlib,time; raise SystemExit(0 if time.time()*1000-float(pathlib.Path('/jobs/heartbeat').read_text())<15000 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  navidrome_data:
+  mimusic_sessions:
+  mimusic_imports:

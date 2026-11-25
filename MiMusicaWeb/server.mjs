@@ -6,18 +6,30 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { ping, requestSubsonic, coverArt, authenticatedURL, SubsonicError, validateServerURL } from './subsonic.mjs';
 import { SessionStore, cookieID, sessionCookie } from './session-store.mjs';
+import { ImportStore } from './import-store.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), 'public');
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || '127.0.0.1';
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 
+function defaultPublicURL(serverURL) {
+  try {
+    const parsed = new URL(serverURL);
+    if (parsed.hostname === 'host.docker.internal' || (!parsed.hostname.includes('.') && parsed.hostname !== 'localhost' && parsed.hostname !== '[::1]')) {
+      return `http://localhost:${parsed.port || '4533'}`;
+    }
+  } catch { /* validateServerURL will report invalid URLs below */ }
+  return serverURL;
+}
+
 export function createMimusicServer({
-  serverURL = process.env.NAVIDROME_URL || 'https://debian.tailfd03e7.ts.net',
-  publicURL = process.env.NAVIDROME_PUBLIC_URL || 'https://debian.tailfd03e7.ts.net',
+  serverURL = process.env.NAVIDROME_URL || 'http://127.0.0.1:4533',
+  publicURL = process.env.NAVIDROME_PUBLIC_URL || defaultPublicURL(serverURL),
   appOrigin = process.env.APP_ORIGIN || '',
   fetchImpl = fetch,
-  sessionStore = null
+  sessionStore = null,
+  importStore = null
 } = {}) {
   validateServerURL(serverURL);
   validateServerURL(publicURL);
@@ -55,6 +67,11 @@ export function createMimusicServer({
       }
       if (pathname === '/api/session' && req.method === 'GET') {
         json(200, session ? { connected: true, remembered: true, username: session.auth.username } : { connected: false });
+        return;
+      }
+      if (pathname === '/api/imports' && req.method === 'GET') {
+        const auth = authFor(null);
+        json(200, importStore ? await importStore.list(auth.username) : { online: false, jobs: [] });
         return;
       }
       if (pathname === '/api/stream') {
@@ -95,7 +112,7 @@ export function createMimusicServer({
         } finally { clearTimeout(timer); res.off('close', cancel); controller.abort(); }
         return;
       }
-      if (pathname !== '/api/connection' && pathname !== '/api/logout' && pathname !== '/api/cover' && !/^\/api\/library\/[a-zA-Z0-9]+$/.test(pathname)) { json(404, { message: 'Ruta no encontrada.' }); return; }
+      if (!['/api/connection', '/api/logout', '/api/cover', '/api/imports', '/api/imports/scan'].includes(pathname) && !/^\/api\/library\/[a-zA-Z0-9]+$/.test(pathname)) { json(404, { message: 'Ruta no encontrada.' }); return; }
       if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); json(405, { message: 'Método no permitido.' }); return; }
       if (req.headers['content-type']?.split(';')[0].trim() !== 'application/json') {
         json(415, { message: 'La petición debe usar JSON.' }); return;
@@ -111,7 +128,22 @@ export function createMimusicServer({
       let body;
       try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
       catch { throw new SubsonicError('invalidAuth', 'La petición no contiene JSON válido.', 400); }
-      if (pathname === '/api/connection') {
+      if (pathname === '/api/imports' || pathname === '/api/imports/scan') {
+        const auth = authFor(null);
+        if (!importStore) throw new SubsonicError('import', 'Las descargas no están habilitadas en este servidor.', 503);
+        if (pathname.endsWith('/scan')) {
+          let result = await requestSubsonic(serverURL, 'startScan', auth, {}, { fetchImpl });
+          for (let attempt = 0; result.scanStatus?.scanning && attempt < 8; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            result = await requestSubsonic(serverURL, 'getScanStatus', auth, {}, { fetchImpl, timeout: 1500 });
+          }
+          json(200, { scanning: Boolean(result.scanStatus?.scanning) });
+        } else {
+          // Revalidate the account before accepting work that writes to the music folder.
+          await ping(serverURL, auth, { fetchImpl });
+          json(202, await importStore.enqueue(auth.username, body?.source));
+        }
+      } else if (pathname === '/api/connection') {
         const result = await ping(serverURL, body, { fetchImpl });
         if (sessionStore) {
           const id = await sessionStore.create(body, sessionID);
@@ -130,7 +162,7 @@ export function createMimusicServer({
         res.end(cover.bytes);
       } else {
         const endpoint = pathname.split('/').at(-1);
-        if (endpoint === 'stream' || endpoint === 'getCoverArt') throw new SubsonicError('invalidEndpoint', 'Usa la ruta de medios correspondiente.', 400);
+        if (['stream', 'getCoverArt', 'startScan'].includes(endpoint)) throw new SubsonicError('invalidEndpoint', 'Usa la ruta correspondiente a esa operación.', 400);
         json(200, await requestSubsonic(serverURL, endpoint, authFor(body?.auth), body?.params, { fetchImpl }));
       }
     } catch (error) {
@@ -172,7 +204,8 @@ export function createMimusicServer({
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const sessionStore = await new SessionStore(process.env.SESSION_STORE_PATH || resolve(dirname(fileURLToPath(import.meta.url)), '.data/sessions.json')).initialize();
-    const server = createMimusicServer({ sessionStore });
+    const importStore = process.env.IMPORT_STORE_PATH ? await new ImportStore(process.env.IMPORT_STORE_PATH).initialize() : null;
+    const server = createMimusicServer({ sessionStore, importStore, appOrigin: process.env.APP_ORIGIN || `http://localhost:${port}` });
     server.on('error', error => {
       console.error(error.code === 'EADDRINUSE' ? `El puerto ${port} está ocupado.` : 'No se pudo iniciar mimusic.');
       process.exitCode = 1;

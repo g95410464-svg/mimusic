@@ -4,6 +4,7 @@
 !server.mjs
 !subsonic.mjs
 !session-store.mjs
+!import-store.mjs
 !public/
 !public/**
 public/demo.js

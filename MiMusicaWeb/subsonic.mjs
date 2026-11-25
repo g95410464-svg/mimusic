@@ -8,11 +8,21 @@ export class SubsonicError extends Error {
   }
 }
 
+function isPrivateHTTPTarget(hostname) {
+  if (['localhost', '127.0.0.1', '[::1]', 'host.docker.internal'].includes(hostname)) return true;
+  if (/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(hostname)) return true;
+  if (/\.local$/i.test(hostname)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  if (/^172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+  return false;
+}
+
 export function validateServerURL(value) {
   try {
     const url = new URL(value);
-    const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
-    if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && local)) || url.username || url.password || url.search || url.hash) throw new Error();
+    const allowedProtocol = url.protocol === 'https:' || (url.protocol === 'http:' && isPrivateHTTPTarget(url.hostname));
+    if (!allowedProtocol || url.username || url.password || url.search || url.hash) throw new Error();
     if (!url.pathname.endsWith('/')) url.pathname += '/';
     return url;
   } catch {
@@ -38,7 +48,7 @@ export function decodeResponse(value) {
 const endpointParams = {
   ping: [], search3: ['query', 'songCount', 'albumCount', 'artistCount', 'songOffset', 'albumOffset', 'artistOffset'],
   getAlbumList2: ['type', 'size', 'offset'], getArtists: [], getArtist: ['id'],
-  getAlbum: ['id'], getPlaylists: [], getPlaylist: ['id'], getCoverArt: ['id', 'size'], stream: ['id', 'format']
+  getAlbum: ['id'], getPlaylists: [], getPlaylist: ['id'], getCoverArt: ['id', 'size'], stream: ['id', 'format'], startScan: [], getScanStatus: []
 };
 
 export function authenticatedURL(serverURL, endpoint, auth, params = {}) {

@@ -1,8 +1,10 @@
 import { libraryClient as client, array, searchResult, artistList } from './library-client.js';
 import './connection.js';
 import { MusicPlayer, queueForSelection } from './player.js';
+import { ImportsPanel } from './imports.js';
 
 const main = document.querySelector('#main');
+const imports = new ImportsPanel(() => loadLibrary());
 function savedShuffle() { try { return localStorage.getItem('mimusica.shuffle') === 'true'; } catch { return false; } }
 const player = new MusicPlayer(client, { audio: document.querySelector('#audio-player') || new Audio(), shuffled: savedShuffle() });
 function saveShuffle() { try { localStorage.setItem('mimusica.shuffle', String(player.isShuffled)); } catch { /* La preferencia es opcional en modo privado. */ } }
@@ -17,7 +19,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 const title = item => item?.name || item?.title || 'Sin título';
 const time = seconds => { const n = Math.max(0, Math.floor(Number(seconds) || 0)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
 const route = () => { const [page = 'inicio', id = ''] = location.hash.slice(1).split('/'); try { return [page || 'inicio', decodeURIComponent(id)]; } catch { return ['inicio', '']; } };
-const heading = (name, eyebrow = 'TU BIBLIOTECA PRIVADA') => `<div class="page-heading"><div><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(name)}</h1></div><button class="secondary-button" data-action="refresh">Actualizar</button></div>`;
+const heading = (name, eyebrow = 'TU BIBLIOTECA PRIVADA') => `<div class="page-heading"><div><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(name)}</h1></div><div class="heading-actions"><a href="#anadir" class="secondary-button">+ Añadir música</a><button class="secondary-button" data-action="refresh">Actualizar</button></div></div>`;
 const empty = (name, text, action = '') => `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">♫</div><h2>${esc(name)}</h2><p>${esc(text)}</p>${action}</div>`;
 const photo = (item, className = '') => `<img src="${esc(covers.get(item?.coverArt) || placeholder)}" ${item?.coverArt ? `data-cover="${esc(item.coverArt)}"` : ''} class="${className}" alt="${esc(title(item))}" loading="lazy">`;
 const albumCard = album => `<button class="album-card" data-action="album" data-id="${esc(album.id)}">${photo(album, 'album-art')}<strong>${esc(title(album))}</strong><span>${esc(album.artist || 'Artista desconocido')}</span></button>`;
@@ -81,14 +83,17 @@ function render() {
   else if (page === 'biblioteca') main.innerHTML = library();
   else if (page === 'playlists') main.innerHTML = playlistsPage();
   else if (page === 'buscar') main.innerHTML = searchPage();
+  else if (page === 'anadir') main.innerHTML = `<div class="page-heading"><div><span class="eyebrow">AMPLÍA TU BIBLIOTECA</span><h1>Añadir música</h1></div><a class="secondary-button" href="#biblioteca">Ver biblioteca</a></div>${imports.markup()}`;
   else if (page === 'reproductor') main.innerHTML = playerPage();
   else if (['album', 'playlist', 'artista'].includes(page)) main.innerHTML = details(page, id);
   else main.innerHTML = home();
   observeCovers(); syncPlayer();
+  if (page === 'anadir' && document.querySelector('#import-form')) imports.mount();
 }
 function navigate(page) { if (location.hash === `#${page}`) { render(); loadRoute(); } else location.hash = page; }
 function openDialog(id) { document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); document.getElementById(id).showModal(); }
 function clearSessionData() {
+  imports.reset();
   player.stop();
   state.generation++; state.albums = []; state.artists = []; state.songs = []; state.playlists = []; state.details.clear();
   state.loading = false; state.error = ''; state.detailLoading = ''; state.detailError = '';
@@ -251,15 +256,18 @@ document.addEventListener('click', event => {
   else if (action === 'queue') { renderQueue(); openDialog('queue-dialog'); }
   else if (action === 'queue-song') player.playAt(Number(button.dataset.queueIndex));
   else if (action === 'enqueue') { const song = findSong(id); if (song) { player.enqueue(song); toast('Canción añadida a la cola.'); } }
+  else if (action === 'import-scan') imports.scan();
+  else if (action === 'import-retry') { const job = imports.jobs.find(job => job.id === id); if (job) imports.submit(job.source.value); }
 });
-document.addEventListener('input', event => { if (event.target.id === 'search-input') { state.search = event.target.value; scheduleSearch(); } });
+document.addEventListener('input', event => { if (event.target.id === 'search-input') { state.search = event.target.value; scheduleSearch(); } else if (event.target.id === 'import-source') imports.input = event.target.value; });
+document.addEventListener('submit', event => { if (event.target.id === 'import-form') { event.preventDefault(); imports.submit(); } });
 document.addEventListener('change', event => { if (event.target.id === 'position') player.seek(Number(event.target.value)); });
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => {
   if (event.target !== dialog) return;
   const rect = dialog.getBoundingClientRect();
   if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
 }));
-window.addEventListener('hashchange', () => { render(); loadRoute(); window.scrollTo({ top: 0, behavior: 'instant' }); });
+window.addEventListener('hashchange', () => { imports.leave(); render(); loadRoute(); window.scrollTo({ top: 0, behavior: 'instant' }); });
 window.addEventListener('mimusica-connected', event => { state.restoring = false; clearSessionData(); document.querySelector('.profile').textContent = client.username[0].toLocaleUpperCase('es'); if (!event.detail?.restored) navigate('inicio'); loadLibrary(); });
 window.addEventListener('mimusica-session-ready', () => { state.restoring = false; if (!client.connected) render(); });
 window.addEventListener('mimusica-disconnected', () => { clearTimeout(searchTimer); searchAbort?.abort(); clearSessionData(); document.querySelector('.profile').textContent = 'M'; render(); });

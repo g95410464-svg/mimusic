@@ -2,6 +2,8 @@
 **/.design/
 **/previews/
 **/.data/
+**/import-data/
+**/__pycache__/
 **/.env
 **/.env.*
 !**/.env.example
@@ -18,6 +20,10 @@ id_ed25519*
 *.flac
 *.m4a
 *.opus
+*.ogg
+*.aac
+*.wma
 *.wav
+*.partial
 .DS_Store
 Thumbs.db

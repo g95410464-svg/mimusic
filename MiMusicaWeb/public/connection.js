@@ -28,13 +28,22 @@ function showStatus(message, state = 'idle', reveal = false) {
   if (reveal && dialog.open) actions.scrollIntoView({ block: 'nearest', behavior: 'instant' });
 }
 
+function browserReachableURL(rawURL) {
+  const url = new URL(rawURL);
+  if (!['https:', 'http:'].includes(url.protocol)) throw new Error();
+  const browserHost = window.location?.hostname;
+  if (['localhost', '127.0.0.1'].includes(url.hostname) && browserHost && !['localhost', '127.0.0.1'].includes(browserHost)) {
+    url.hostname = browserHost;
+  }
+  return url;
+}
+
 async function loadConfiguration() {
   try {
     const response = await fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(8000) });
     if (!response.ok) throw new Error();
     const config = await response.json();
-    const url = new URL(config.serverURL);
-    if (url.protocol !== 'https:') throw new Error();
+    const url = browserReachableURL(config.serverURL);
     document.querySelector('#navidrome-url').value = url.origin + (url.pathname === '/' ? '' : url.pathname);
     const link = document.querySelector('#navidrome-open');
     link.href = url.href;
@@ -50,7 +59,7 @@ async function loadConfiguration() {
       window.dispatchEvent(new CustomEvent('mimusica-connected', { detail: { restored: true } }));
     } else {
       submit.disabled = false;
-      showStatus('Introduce tus credenciales una vez. mimusic recordará tu sesión durante 30 días.');
+      showStatus('Introduce tus credenciales de Navidrome. ¿Primera vez? Pulsa «Abrir Navidrome» abajo para crear tu cuenta.');
     }
   } catch {
     configured = false;
