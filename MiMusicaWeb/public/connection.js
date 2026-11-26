@@ -12,6 +12,7 @@ const dialog = document.querySelector('#settings-dialog');
 let configured = false;
 let checking = false;
 let connected = false;
+let serverIdentity = '';
 
 function syncSessionFields() {
   username.readOnly = connected;
@@ -40,9 +41,11 @@ function browserReachableURL(rawURL) {
 
 async function loadConfiguration() {
   try {
+    if (navigator.onLine === false) throw new Error('Sin conexión');
     const response = await fetch('/api/config', { cache: 'no-store', signal: AbortSignal.timeout(8000) });
     if (!response.ok) throw new Error();
     const config = await response.json();
+    serverIdentity = config.serverURL;
     const url = browserReachableURL(config.serverURL);
     document.querySelector('#navidrome-url').value = url.origin + (url.pathname === '/' ? '' : url.pathname);
     const link = document.querySelector('#navidrome-open');
@@ -56,7 +59,7 @@ async function loadConfiguration() {
       document.querySelector('#connection-close').textContent = 'Ver mi biblioteca';
       document.querySelector('#connection-disconnect').hidden = false;
       showStatus('Tu sesión está guardada. Puedes seguir escuchando tu música.', 'success');
-      window.dispatchEvent(new CustomEvent('mimusica-connected', { detail: { restored: true } }));
+      window.dispatchEvent(new CustomEvent('mimusica-connected', { detail: { restored: true, serverURL: serverIdentity } }));
     } else {
       submit.disabled = false;
       showStatus('Introduce tus credenciales de Navidrome. ¿Primera vez? Pulsa «Abrir Navidrome» abajo para crear tu cuenta.');
@@ -66,7 +69,7 @@ async function loadConfiguration() {
     showStatus('No se pudo cargar la configuración. Comprueba la conexión y pulsa «Reintentar configuración».', 'error', true);
     submit.disabled = false;
     submit.textContent = 'Reintentar configuración';
-  } finally { window.dispatchEvent(new Event('mimusica-session-ready')); }
+  } finally { window.dispatchEvent(new CustomEvent('mimusica-session-ready', { detail: { reachable: configured } })); }
 }
 
 form.addEventListener('submit', async event => {
@@ -108,7 +111,7 @@ form.addEventListener('submit', async event => {
     showStatus('Sesión guardada. Puedes recargar o volver a abrir mimusic sin iniciar sesión durante 30 días.', 'success', true);
     document.querySelector('#connection-close').textContent = 'Ver mi biblioteca';
     document.querySelector('#connection-disconnect').hidden = false;
-    window.dispatchEvent(new Event('mimusica-connected'));
+    window.dispatchEvent(new CustomEvent('mimusica-connected', { detail: { serverURL: serverIdentity } }));
   } catch (error) {
     const message = error.name === 'TimeoutError' ? 'La prueba tardó demasiado. Comprueba Tailscale y vuelve a intentarlo.'
       : error instanceof TypeError || error instanceof SyntaxError ? 'No se pudo contactar con mimusic. Comprueba la conexión y vuelve a intentarlo.'
@@ -138,20 +141,20 @@ form.addEventListener('input', event => {
   showStatus('Pulsa «Probar conexión» para verificar estas credenciales.');
 });
 dialog.addEventListener('close', () => { password.value = ''; });
-function resetSessionUI() {
+function resetSessionUI(logout = false) {
   connected = false;
   syncSessionFields();
   password.value = ''; username.value = '';
   submit.disabled = false; submit.textContent = 'Conectar mi biblioteca'; submit.dataset.state = 'idle';
   document.querySelector('#connection-disconnect').hidden = true;
   document.querySelector('#connection-close').textContent = 'Cerrar ajustes';
-  window.dispatchEvent(new Event('mimusica-disconnected'));
+  window.dispatchEvent(new CustomEvent('mimusica-disconnected', { detail: { logout } }));
 }
 document.querySelector('#connection-disconnect').addEventListener('click', async event => {
   const button = event.currentTarget;
   button.disabled = true;
   try {
-    await libraryClient.logout(); resetSessionUI();
+    await libraryClient.logout(); resetSessionUI(true);
     showStatus('Sesión cerrada en este navegador. Introduce tus credenciales para volver a conectar.');
   } catch { showStatus('No se pudo cerrar la sesión guardada. Comprueba Tailscale y vuelve a intentarlo.', 'error', true); }
   finally { button.disabled = false; }
@@ -161,3 +164,4 @@ libraryClient.addEventListener('expired', () => {
   showStatus('Tu sesión ha caducado o las credenciales han cambiado. Conecta de nuevo tu cuenta.', 'error');
 });
 loadConfiguration();
+window.addEventListener('mimusica-reconnect', () => { if (!checking) loadConfiguration(); });

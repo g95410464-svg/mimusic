@@ -17,6 +17,26 @@ class AudioStub extends EventTarget {
 const songs = [{ id: 'a', title: 'Primera', duration: 120 }, { id: 'b', title: 'Segunda', duration: 120 }];
 const fakeClient = { streamURL: id => `/test/${id}` };
 
+test('sin conexión salta canciones no guardadas y mantiene la continuidad y repetición', async () => {
+  const audio = new AudioStub(), tracks = [...songs, { id: 'c', title: 'Tercera' }];
+  const player = new MusicPlayer(fakeClient, { audio, mediaSession: null, isAvailable: song => song.id !== 'b' });
+  await player.playSong(tracks[0], tracks); audio.dispatchEvent(new Event('ended'));
+  assert.equal(player.currentSong.id, 'c');
+  audio.currentTime = 0; await player.previous(); assert.equal(player.currentSong.id, 'a');
+  player.toggleRepeat('one'); audio.dispatchEvent(new Event('ended')); assert.equal(player.currentSong.id, 'a');
+  player.toggleRepeat('one'); await player.next(); await player.next(); assert.equal(player.currentSong.id, 'a');
+});
+
+test('elegir una canción sin copia local detiene el audio anterior y muestra un error claro', async () => {
+  const audio = new AudioStub();
+  const player = new MusicPlayer({ streamURL: id => {
+    if (id === 'b') { const error = new Error('Guarda esta canción antes de escucharla sin conexión.'); error.kind = 'offline'; throw error; }
+    return '/offline-audio/a';
+  } }, { audio, mediaSession: null });
+  await player.playSong(songs[0], songs); await player.playAt(1);
+  assert.equal(audio.paused, true); assert.equal(audio.src, ''); assert.match(player.error, /Guarda esta canción/);
+});
+
 test('repetir siempre conserva la misma canción y al desactivarlo continúa la cola', async () => {
   const audio = new AudioStub(), player = new MusicPlayer(fakeClient, { audio, mediaSession: null });
   await player.playSong(songs[0], songs); audio.currentTime = 42;

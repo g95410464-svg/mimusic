@@ -33,6 +33,7 @@
 - **Agregar canciones, álbumes o playlists desde la misma web:** pulsas **+ Añadir música**, escribes el nombre de una canción o pegas el enlace de **una canción, un álbum completo o una playlist** de **YouTube**, **YouTube Music** o **Spotify**, y todo se descarga solo a tu biblioteca con portadas y listas armadas.
 - **Escuchar en cualquier pantalla:** en tu computadora, o abrirlo desde el navegador de tu **iPad, iPhone o Android** y agregarlo a tu pantalla de inicio como una aplicación.
 - **Controles completos:** reproducción continua, modo **Aleatorio**, **Repetir siempre**, **Una vez más (`+1`)** y sesión recordada por 30 días para no escribir tu contraseña cada vez.
+- **Escuchar sin internet:** guarda canciones con **↓** o una playlist con **Guardar sin conexión**, y escúchalas en **Sin conexión** aunque el servidor esté apagado. Las copias se guardan en cada dispositivo.
 
 ---
 
@@ -107,6 +108,14 @@ Tienes **dos formas muy fáciles** de llenar tu biblioteca:
 ---
 
 ## Preguntas frecuentes del día a día
+
+### ¿Cómo escucho sin internet?
+1. Abre mimusic por **HTTPS** (por ejemplo, su dirección privada de Tailscale). Para el iPad, añádela primero a la pantalla de inicio y guarda las canciones desde esa app.
+2. Con el servidor accesible, pulsa **↓** junto a una canción, o **Guardar sin conexión** dentro de una playlist o álbum.
+3. Mantén la app abierta y espera a que aparezcan en **Sin conexión**, con su espacio ocupado. El símbolo **✓** confirma que una canción está guardada.
+4. Después puedes apagar Wi-Fi/datos y Tailscale: abre la misma app y entra en **Sin conexión** para escuchar, buscar, mezclar y repetir tus descargas.
+
+El botón **×** elimina solo la copia de ese dispositivo. El original permanece en Navidrome. Las copias no se comparten entre dispositivos o navegadores. Borrar los datos de la web app elimina sus descargas; el navegador también puede liberar espacio si el dispositivo se queda sin almacenamiento. Las descargas necesitan HTTPS o localhost: la dirección HTTP de la red local permite streaming, pero no preparar el modo offline. No cierres la app durante una descarga; si queda incompleta, vuelve a intentarlo. Límite por canción: 150 MB.
 
 ### ¿Cómo lo apago y cómo lo vuelvo a prender otro día?
 - **Para apagarlo:** Entra a la carpeta y haz doble clic en **`stop.bat`** (en Mac/Linux: `sh stop.sh`). Tu música, tu cuenta y tus playlists quedan guardadas intactas.

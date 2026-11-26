@@ -37,7 +37,7 @@ body.now-playing .playing-ambient { opacity: 1; }
 .header { height: 118px; padding: 0 var(--gutter); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; max-width: 1920px; margin: 0 auto; }
 .brand { display: flex; align-items: center; gap: 11px; width: fit-content; font-size: 22px; font-weight: 700; letter-spacing: -.7px; }
 .brand img { border-radius: 9px; }
-.tabs { display: flex; align-items: center; padding: 6px; gap: 3px; border-radius: 100px; background: rgb(9 9 9 / 80%); box-shadow: 3px 3px 30px 2px rgb(0 0 0 / 12%); }
+.tabs { display: flex; align-items: center; max-width: 100%; min-width: 0; overflow-x: auto; padding: 6px; gap: 3px; border-radius: 100px; background: rgb(9 9 9 / 80%); box-shadow: 3px 3px 30px 2px rgb(0 0 0 / 12%); }
 .tabs a { white-space: nowrap; min-height: 44px; padding: 12px 23px; border-radius: 100px; color: #aaa; font-weight: 650; font-size: 16px; text-align: center; }
 .tabs a:hover { color: white; background: rgb(255 255 255 / 10%); }
 .tabs a[aria-current="page"] { background: #f5f5f7; color: #252525; box-shadow: 0 4px 20px #0002; }
@@ -102,7 +102,7 @@ h2 { font-size: clamp(23px, 2vw, 30px); letter-spacing: -.7px; line-height: 1.25
 .results-section { margin-bottom: 36px; }
 .results-section h2 { margin-bottom: 18px; }
 .track-list { display: grid; }
-.track-row { display: grid; grid-template-columns: 36px 48px minmax(0, 1fr) 80px 44px; align-items: center; gap: 15px; padding: 12px 10px; border-bottom: 1px solid var(--stroke); border-radius: 8px; }
+.track-row { display: grid; grid-template-columns: 36px 48px minmax(0, 1fr) 64px 92px; align-items: center; gap: 15px; padding: 12px 10px; border-bottom: 1px solid var(--stroke); border-radius: 8px; }
 .track-row:hover { background: #ffffff08; }
 .track-row.selected { background: #ffffff0e; }
 .track-number { color: var(--muted); text-align: center; font-size: 14px; }
@@ -114,6 +114,14 @@ h2 { font-size: clamp(23px, 2vw, 30px); letter-spacing: -.7px; line-height: 1.25
 .track-time { color: var(--secondary); font-size: 14px; text-align: right; }
 .track-more { width: 44px; height: 44px; border-radius: 50%; color: var(--secondary); font-size: 24px; }
 .track-more:hover { color: white; background: #ffffff12; }
+.track-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.track-download { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 50%; color: #d6e9e1; background: #ffffff08; font-size: 22px; }
+.track-download:hover { background: #ffffff20; }
+.track-download:disabled { opacity: .5; }
+.offline-help { max-width: 800px; margin: 0 0 12px; color: var(--secondary); line-height: 1.6; }
+.offline-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 28px; }
+#offline-status { min-height: 64px; padding-block: 20px; color: #b9d8ca; line-height: 1.5; }
+#offline-status.error { color: #ffada9; }
 .detail-hero { display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); gap: 42px; align-items: end; margin: 24px 0 40px; }
 .detail-cover { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 15px; box-shadow: 0 25px 60px #0006; }
 .detail-hero h1 { font-size: clamp(32px, 5vw, 62px); margin: 15px 0 12px; letter-spacing: -2px; }
@@ -257,7 +265,7 @@ h2 { font-size: clamp(23px, 2vw, 30px); letter-spacing: -.7px; line-height: 1.25
   .header { height: 140px; padding-top: max(4px, env(safe-area-inset-top)); }
   .brand { font-size: 22px; }
   .tabs { width: 100%; gap: 0; padding: 5px; }
-  .tabs a { flex: 1; padding: 12px 9px; font-size: 12px; }
+  .tabs a { flex: 1 0 auto; padding: 12px 9px; font-size: 12px; }
   .tabs .search-tab { flex: 0; padding: 12px; min-width: 43px; }
   main { padding-bottom: 140px; }
   .page-heading { margin-top: 0; }
@@ -286,11 +294,12 @@ h2 { font-size: clamp(23px, 2vw, 30px); letter-spacing: -.7px; line-height: 1.25
   .detail-cover { width: 72%; margin: 0 auto; }
   .detail-hero h1 { font-size: 36px; letter-spacing: -1px; }
   .detail-actions { justify-content: center; }
-  .track-row { grid-template-columns: 22px 40px minmax(0, 1fr) 42px 32px; gap: 8px; padding-inline: 0; }
+  .track-row { grid-template-columns: 22px 40px minmax(0, 1fr) 92px; gap: 8px; padding-inline: 0; }
+  .track-row .track-time { display: none; }
   .track-thumb { width: 40px; height: 40px; }
   .track-main strong { font-size: 14px; }
   .track-main span { font-size: 12px; }
-  .track-more { width: 32px; }
+  .track-more { width: 44px; }
   .track-time { font-size: 12px; }
   .artists { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
   .player-art { width: min(74vw, 31svh, 330px); }

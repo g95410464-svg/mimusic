@@ -19,9 +19,11 @@ export class MusicPlayer extends EventTarget {
   #client;
   #version = 0;
   #media;
-  constructor(client, { audio = new Audio(), mediaSession = typeof navigator !== 'undefined' ? navigator.mediaSession : null, shuffled = false, random = Math.random } = {}) {
+  #isAvailable;
+  constructor(client, { audio = new Audio(), mediaSession = typeof navigator !== 'undefined' ? navigator.mediaSession : null, shuffled = false, random = Math.random, isAvailable = () => true } = {}) {
     super(); this.#client = client; this.#audio = audio; this.#media = mediaSession;
     this.isShuffled = shuffled; this.#random = random;
+    this.#isAvailable = isAvailable;
     audio.preload = 'metadata';
     audio.addEventListener('play', () => { this.isPlaying = true; this.#emit(); });
     for (const name of ['timeupdate', 'durationchange', 'loadedmetadata']) audio.addEventListener(name, () => { this.#position(); this.#emit('time'); });
@@ -31,7 +33,7 @@ export class MusicPlayer extends EventTarget {
     audio.addEventListener('error', () => {
       if (!this.currentSong) return;
       this.isPlaying = false; this.isLoading = false;
-      this.error = 'No se pudo reproducir esta canción. Comprueba Tailscale y que el servidor siga encendido. Si ocurre solo con este archivo, puede que su formato no sea compatible.';
+      this.error = audio.getAttribute('src')?.startsWith('/offline-audio/') ? 'No se pudo leer la copia local. Vuelve a descargar esta canción cuando tengas conexión.' : 'No se pudo reproducir esta canción. Comprueba Tailscale y que el servidor siga encendido. Si ocurre solo con este archivo, puede que su formato no sea compatible.';
       this.#emit();
     });
     audio.addEventListener('ended', () => {
@@ -113,12 +115,15 @@ export class MusicPlayer extends EventTarget {
       this.#emit('track');
       // Se llama directamente dentro del gesto de tocar una canción.
       await this.#audio.play();
-    } catch (error) { this.#playError(error, version); }
+    } catch (error) {
+      if (version === this.#version && error.kind === 'offline') { this.#audio.pause(); this.#audio.removeAttribute('src'); this.#audio.load(); }
+      this.#playError(error, version);
+    }
   }
   #playError(error, version) {
     if (version !== this.#version || error.name === 'AbortError') return;
     this.isPlaying = false; this.isLoading = false;
-    this.error = error.name === 'NotAllowedError' ? 'Pulsa Reproducir para permitir el audio en este navegador.' : 'No se pudo iniciar el audio. Comprueba Tailscale y vuelve a pulsar Reproducir.';
+    this.error = error.kind === 'offline' ? error.message : error.name === 'NotAllowedError' ? 'Pulsa Reproducir para permitir el audio en este navegador.' : 'No se pudo iniciar el audio. Comprueba Tailscale y vuelve a pulsar Reproducir.';
     this.#emit();
   }
   async resume() {
@@ -134,7 +139,8 @@ export class MusicPlayer extends EventTarget {
   next() {
     if (!this.queue.length || this.index < 0) return;
     this.#cancelOneMore();
-    if (this.index < this.queue.length - 1) return this.#start(this.index + 1);
+    const next = this.queue.findIndex((song, i) => i > this.index && this.#isAvailable(song));
+    if (next >= 0) return this.#start(next);
     if (this.isShuffled) {
       this.queue = this.#shuffle(this.#orderedQueue);
       // Al empezar otra vuelta, evita repetir inmediatamente la última canción.
@@ -143,11 +149,16 @@ export class MusicPlayer extends EventTarget {
         if (different > 0) [this.queue[0], this.queue[different]] = [this.queue[different], this.queue[0]];
       }
     }
-    return this.#start(0);
+    const first = this.queue.findIndex(song => this.#isAvailable(song));
+    if (first >= 0) return this.#start(first);
+    this.pause(); this.error = 'No hay canciones guardadas disponibles en esta cola.'; this.#emit();
   }
   previous() {
     if (this.currentTime > 3 || this.index === 0) this.seek(0);
-    else if (this.index > 0) { this.#cancelOneMore(); return this.#start(this.index - 1); }
+    else if (this.index > 0) {
+      for (let i = this.index - 1; i >= 0; i--) if (this.#isAvailable(this.queue[i])) { this.#cancelOneMore(); return this.#start(i); }
+      this.seek(0);
+    }
   }
   seek(seconds) {
     if (!Number.isFinite(seconds) || !this.currentSong) return;

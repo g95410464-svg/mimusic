@@ -3,17 +3,23 @@ import './connection.js';
 import { MusicPlayer, queueForSelection } from './player.js';
 import { ImportsPanel } from './imports.js';
 import { namedAlbums, displayArtist, songSubtitle, artistSongs } from './library-display.js';
+import { OfflineLibrary, formatBytes } from './offline.js';
 
 const main = document.querySelector('#main');
 const imports = new ImportsPanel(() => loadLibrary());
+const offline = new OfflineLibrary(client);
 function savedShuffle() { try { return localStorage.getItem('mimusica.shuffle') === 'true'; } catch { return false; } }
-const player = new MusicPlayer(client, { audio: document.querySelector('#audio-player') || new Audio(), shuffled: savedShuffle() });
+const player = new MusicPlayer({ streamURL: id => {
+  const saved = offline.audioURL(id); if (saved) return saved;
+  if (state.localMode || !client.connected) { const error = new Error('Guarda esta canción antes de escucharla sin conexión.'); error.kind = 'offline'; throw error; }
+  return client.streamURL(id);
+} }, { audio: document.querySelector('#audio-player') || new Audio(), shuffled: savedShuffle(), isAvailable: song => !(state.localMode || !client.connected) || offline.has(song.id) });
 function saveShuffle() { try { localStorage.setItem('mimusica.shuffle', String(player.isShuffled)); } catch { /* La preferencia es opcional en modo privado. */ } }
 const shuffleControl = '<button class="shuffle-button shuffle-toggle" data-action="shuffle" aria-label="Reproducción aleatoria" aria-pressed="false"><img src="/assets/shuffle.svg" width="22" height="22" alt="">Aleatorio</button>';
 const repeatControls = '<div class="repeat-controls" role="group" aria-label="Repetir esta canción"><button class="repeat-button" data-action="repeat-one" aria-pressed="false" title="Repite esta canción hasta que lo desactives"><img src="/assets/repeat.svg" width="20" height="20" alt="">Repetir siempre</button><button class="repeat-button" data-action="repeat-once" aria-pressed="false" title="La repite una vez y después continúa la cola"><span aria-hidden="true">+1</span>Una vez más</button></div>';
 const state = { albums: [], artists: [], songs: [], playlists: [], loading: false, restoring: true, error: '', library: 'songs',
   search: '', searchType: 'all', results: { songs: [], albums: [], artists: [] }, searchLoading: false, searchError: '',
-  backStack: [], details: new Map(), detailLoading: '', detailError: '', generation: 0 };
+  backStack: [], details: new Map(), detailLoading: '', detailError: '', generation: 0, localMode: navigator.onLine === false, offlineQuery: '' };
 const covers = new Map(), loadingCovers = new Map();
 const placeholder = '/assets/icon.svg';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,11 +28,12 @@ const time = seconds => { const n = Math.max(0, Math.floor(Number(seconds) || 0)
 const route = () => { const [page = 'inicio', id = ''] = location.hash.slice(1).split('/'); try { return [page || 'inicio', decodeURIComponent(id)]; } catch { return ['inicio', '']; } };
 const heading = (name, eyebrow = 'TU BIBLIOTECA PRIVADA') => `<div class="page-heading"><div><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(name)}</h1></div><div class="heading-actions"><a href="#anadir" class="secondary-button">+ Añadir música</a><button class="secondary-button" data-action="refresh">Actualizar</button></div></div>`;
 const empty = (name, text, action = '') => `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">♫</div><h2>${esc(name)}</h2><p>${esc(text)}</p>${action}</div>`;
-const photo = (item, className = '') => `<img src="${esc(covers.get(item?.coverArt) || placeholder)}" ${item?.coverArt ? `data-cover="${esc(item.coverArt)}"` : ''} class="${className}" alt="${esc(title(item))}" loading="lazy">`;
+const photo = (item, className = '') => `<img src="${esc(offline.coverURL(item) || covers.get(item?.coverArt) || placeholder)}" ${item?.coverArt && !offline.coverURL(item) ? `data-cover="${esc(item.coverArt)}"` : ''} class="${className}" alt="${esc(title(item))}" loading="lazy">`;
+const downloadButton = song => `<button class="track-download" data-action="save-offline" data-offline-id="${esc(song.id)}" data-id="${esc(song.id)}" aria-label="Guardar sin conexión: ${esc(song.title)}" title="Guardar sin conexión">↓</button>`;
 const albumCard = album => `<button class="album-card" data-action="album" data-id="${esc(album.id)}">${photo(album, 'album-art')}<strong>${esc(title(album))}</strong><span>${esc(displayArtist(album.artist))}</span></button>`;
 const playlistCard = playlist => `<button class="album-card" data-action="playlist" data-id="${esc(playlist.id)}">${photo(playlist, 'album-art')}<strong>${esc(title(playlist))}</strong><span>${playlist.songCount || 0} canciones</span></button>`;
 const artistCards = artists => `<div class="artists">${artists.map(artist => `<button class="artist-card" data-action="artist" data-id="${esc(artist.id)}">${photo(artist)}<strong>${esc(title(artist))}</strong><p>${artistSongs(state.songs, artist).length} canciones</p></button>`).join('')}</div>`;
-const songsHTML = (songs, fromQueue = false) => `<div class="track-list">${songs.map((song, i) => `<div class="track-row ${(fromQueue ? player.index === i : player.currentSong?.id === song.id) ? 'selected' : ''}" data-song-id="${esc(song.id)}"><span class="track-number">${i + 1}</span>${photo(song, 'track-thumb')}<button class="track-main" data-action="${fromQueue ? 'queue-song' : 'song'}" data-id="${esc(song.id)}" ${fromQueue ? `data-queue-index="${i}"` : ""} aria-label="Reproducir ${esc(song.title || 'canción')}"><strong>${esc(song.title || 'Sin título')}</strong><span>${esc(songSubtitle(song))}</span></button><span class="track-time">${time(song.duration)}</span>${fromQueue ? '' : `<button class="track-more" data-action="enqueue" data-id="${esc(song.id)}" aria-label="Añadir a la cola: ${esc(song.title)}">+</button>`}</div>`).join('')}</div>`;
+const songsHTML = (songs, fromQueue = false, savedOnly = false) => `<div class="track-list">${songs.map((song, i) => `<div class="track-row ${(fromQueue ? player.index === i : player.currentSong?.id === song.id) ? 'selected' : ''}" data-song-id="${esc(song.id)}"><span class="track-number">${i + 1}</span>${photo(song, 'track-thumb')}<button class="track-main" data-action="${fromQueue ? 'queue-song' : 'song'}" data-id="${esc(song.id)}" ${fromQueue ? `data-queue-index="${i}"` : ""} aria-label="Reproducir ${esc(song.title || 'canción')}"><strong>${esc(song.title || 'Sin título')}</strong><span>${esc(songSubtitle(song))}</span></button><span class="track-time">${time(song.duration)}</span>${fromQueue ? '' : `<div class="track-actions">${savedOnly ? `<button class="track-download" data-action="remove-offline" data-id="${esc(song.id)}" aria-label="Eliminar descarga: ${esc(song.title)}" title="Eliminar copia de este dispositivo">×</button>` : `${downloadButton(song)}<button class="track-more" data-action="enqueue" data-id="${esc(song.id)}" aria-label="Añadir a la cola: ${esc(song.title)}">+</button>`}</div>`}</div>`).join('')}</div>`;
 
 function home() {
   if (!state.albums.length && !state.songs.length) return `${heading('Tu música')}${empty('Tu biblioteca todavía está vacía', 'Navidrome no devolvió canciones. Comprueba que haya terminado de escanear la carpeta de música.', '<button class="primary-button" data-action="refresh">Actualizar biblioteca</button>')}`;
@@ -52,7 +59,7 @@ function details(kind, id) {
     return `${back}${heading(title(item), 'ARTISTA')}${songs.length ? `<section class="shelf"><h2>Canciones</h2>${songsHTML(songs)}</section>` : ''}${albums.length ? `<section class="shelf"><h2>Álbumes</h2><div class="album-grid">${albums.map(albumCard).join('')}</div></section>` : ''}${!songs.length && !albums.length ? empty('Sin canciones', 'No hay canciones disponibles para este artista.') : ''}`;
   }
   const songs = kind === 'album' ? array(item.song) : array(item.entry);
-  return `${back}<section class="detail-hero">${photo(item, 'detail-cover')}<div><span class="eyebrow">${kind === 'album' ? 'ÁLBUM' : 'PLAYLIST'}</span><h1>${esc(title(item))}</h1><p>${esc(item.artist || item.comment || '')}</p><p>${songs.length} canciones · ${Math.round(songs.reduce((sum, song) => sum + (Number(song.duration) || 0), 0) / 60)} minutos${item.year ? ` · ${esc(item.year)}` : ''}</p>${songs.length ? '<div class="detail-actions"><button class="primary-button" data-action="play-selection"><span class="play-icon" aria-hidden="true"></span>Reproducir</button><button class="secondary-button" data-action="shuffle-selection"><img src="/assets/shuffle.svg" width="20" height="20" alt="">Aleatorio</button></div>' : ''}</div></section>${songsHTML(songs)}`;
+  return `${back}<section class="detail-hero">${photo(item, 'detail-cover')}<div><span class="eyebrow">${kind === 'album' ? 'ÁLBUM' : 'PLAYLIST'}</span><h1>${esc(title(item))}</h1><p>${esc(item.artist || item.comment || '')}</p><p>${songs.length} canciones · ${Math.round(songs.reduce((sum, song) => sum + (Number(song.duration) || 0), 0) / 60)} minutos${item.year ? ` · ${esc(item.year)}` : ''}</p>${songs.length ? '<div class="detail-actions"><button class="secondary-button" data-action="save-selection">Guardar sin conexión</button><button class="primary-button" data-action="play-selection"><span class="play-icon" aria-hidden="true"></span>Reproducir</button><button class="secondary-button" data-action="shuffle-selection"><img src="/assets/shuffle.svg" width="20" height="20" alt="">Aleatorio</button></div>' : ''}</div></section>${songsHTML(songs)}`;
 }
 function playerPage() {
   const song = player.currentSong;
@@ -74,6 +81,40 @@ function resultsHTML() {
   if (['all', 'artists'].includes(state.searchType) && artists.length) html += `<section class="results-section"><h2>Artistas</h2>${artistCards(artists)}</section>`;
   return html || empty('Sin coincidencias', 'Prueba con otro título o artista de tu biblioteca.');
 }
+function offlineSongs() {
+  const query = state.offlineQuery.trim().toLocaleLowerCase('es');
+  return offline.songs.filter(song => !query || `${song.title} ${song.artist || ''}`.toLocaleLowerCase('es').includes(query));
+}
+function offlinePage() {
+  return `<div class="page-heading"><div><span class="eyebrow">EN ESTE DISPOSITIVO</span><h1>Sin conexión</h1></div><button class="secondary-button" data-action="reconnect">Conectar al servidor</button></div><p class="offline-help">Guarda canciones con ↓ mientras tienes conexión. Mantén la app abierta hasta que aparezcan como guardadas. Después podrás escucharlas aquí sin internet ni Tailscale.</p><p class="offline-help">Las copias ocupan espacio en este dispositivo. Borrar los datos de la web app también borra estas descargas.</p><div class="offline-toolbar"><strong id="offline-count"></strong><button class="secondary-button" data-action="play-offline">Reproducir guardadas</button><button class="secondary-button" data-action="cancel-downloads">Cancelar pendientes</button></div><div id="offline-status" role="status" aria-live="polite"></div><label class="search-field"><input id="offline-search" type="search" aria-label="Buscar en las descargadas" placeholder="Buscar en las descargadas…" value="${esc(state.offlineQuery)}"></label><div id="offline-songs"></div>`;
+}
+function syncOffline() {
+  document.querySelectorAll('[data-offline-id]').forEach(button => {
+    const id = button.dataset.offlineId, saved = offline.has(id), waiting = offline.pending.has(id);
+    button.disabled = waiting || (!saved && (!client.connected || state.localMode));
+    button.dataset.action = saved ? 'show-offline' : 'save-offline';
+    button.textContent = saved ? '✓' : waiting ? '…' : '↓';
+    const name = findSong(id)?.title || 'Canción';
+    button.setAttribute('aria-label', `${saved ? 'Guardada sin conexión' : waiting ? 'Descargando' : 'Guardar sin conexión'}: ${name}`);
+    button.title = saved ? 'Guardada en este dispositivo' : waiting ? 'Descarga pendiente' : 'Guardar sin conexión';
+  });
+  const list = document.querySelector('#offline-songs');
+  if (!list) return;
+  document.querySelector('#offline-count').textContent = `${offline.songs.length} guardadas · ${formatBytes(offline.bytes)}`;
+  const item = [...offline.pending.values()].find(item => item.state === 'downloading');
+  const progress = item ? `${item.song.title}: ${formatBytes(item.received)}${item.total ? ` de ${formatBytes(item.total)}` : ''}` : offline.pending.size ? 'Preparando descargas…' : '';
+  const status = document.querySelector('#offline-status');
+  status.textContent = offline.error || progress || offline.message || (offline.ready ? offline.songs.length ? 'Las canciones guardadas están listas para escuchar.' : 'Todavía no has guardado canciones en este dispositivo.' : 'Abriendo descargas…');
+  status.classList.toggle('error', Boolean(offline.error));
+  document.querySelector('[data-action="cancel-downloads"]').hidden = !offline.pending.size;
+  document.querySelector('[data-action="play-offline"]').disabled = !offline.songs.length;
+}
+function renderOfflineSongs() {
+  const list = document.querySelector('#offline-songs'); if (!list) return;
+  const songs = offlineSongs();
+  list.innerHTML = songs.length ? songsHTML(songs, false, true) : empty(offline.ready ? 'Sin canciones guardadas' : 'Abriendo descargas…', state.offlineQuery ? 'No hay descargas que coincidan con esa búsqueda.' : 'Conecta tu cuenta y pulsa ↓ junto a una canción de tu biblioteca.');
+  observeCovers(); syncPlayer();
+}
 function render() {
   const [page, id] = route();
   document.body.classList.toggle('now-playing', page === 'reproductor' && Boolean(player.currentSong)); document.title = player.currentSong ? `${player.currentSong.title} · mimusic` : 'mimusic · Tu biblioteca';
@@ -81,7 +122,10 @@ function render() {
     const active = link.dataset.route === page || (['album', 'artista'].includes(page) && link.dataset.route === 'biblioteca') || (page === 'playlist' && link.dataset.route === 'playlists');
     if (active) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
   });
-  if (state.restoring) main.innerHTML = empty('Abriendo tu biblioteca…', 'Recuperando tu sesión.');
+  if (page === 'descargas') main.innerHTML = offlinePage();
+  else if (page === 'reproductor' && player.currentSong) main.innerHTML = playerPage();
+  else if (state.localMode) main.innerHTML = offlinePage();
+  else if (state.restoring) main.innerHTML = empty('Abriendo tu biblioteca…', 'Recuperando tu sesión.', '<a href="#descargas" class="secondary-button">Escuchar sin conexión</a>');
   else if (!client.connected) main.innerHTML = empty('Tu música te espera', 'Conecta tu cuenta de Navidrome para explorar tu biblioteca privada.', '<button class="primary-button" data-action="settings">Conectar mi biblioteca</button>');
   else if (state.loading) main.innerHTML = empty('Cargando tu biblioteca…', 'Consultando álbumes, artistas y canciones de Navidrome.');
   else if (state.error) main.innerHTML = empty('No se pudo cargar la biblioteca', state.error, '<button class="primary-button" data-action="refresh">Reintentar</button>');
@@ -93,13 +137,14 @@ function render() {
   else if (['album', 'playlist', 'artista'].includes(page)) main.innerHTML = details(page, id);
   else main.innerHTML = home();
   observeCovers(); syncPlayer();
+  renderOfflineSongs(); syncOffline();
   if (page === 'anadir' && document.querySelector('#import-form')) imports.mount();
 }
 function navigate(page) { if (location.hash === `#${page}`) { render(); loadRoute(); } else location.hash = page; }
 function openDialog(id) { document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); document.getElementById(id).showModal(); }
-function clearSessionData() {
+function clearSessionData(preservePlayer = false) {
   imports.reset();
-  player.stop();
+  if (!preservePlayer) player.stop();
   state.generation++; state.albums = []; state.artists = []; state.songs = []; state.playlists = []; state.details.clear();
   state.loading = false; state.error = ''; state.detailLoading = ''; state.detailError = '';
   state.search = ''; state.results = { songs: [], albums: [], artists: [] }; state.searchError = ''; state.searchLoading = false;
@@ -117,12 +162,12 @@ async function loadLibrary() {
     if (generation !== state.generation) return;
     state.albums = namedAlbums(albums); state.artists = artistList(artistBody);
     state.playlists = array(playlistBody.playlists?.playlist); state.songs = songs;
-  } catch (error) { if (generation === state.generation) state.error = error.message; }
+  } catch (error) { if (generation === state.generation) { state.error = error.message; if (offline.songs.length) state.localMode = true; } }
   finally { if (generation === state.generation) { state.loading = false; render(); loadRoute(); } }
 }
 async function loadRoute() {
   const [page, id] = route();
-  if (!client.connected || !['album', 'playlist', 'artista'].includes(page) || !id) return;
+  if (!client.connected || state.localMode || !['album', 'playlist', 'artista'].includes(page) || !id) return;
   const key = `${page}/${id}`;
   if (state.details.has(key) || state.detailLoading === key) return;
   state.detailLoading = key; state.detailError = ''; const generation = state.generation;
@@ -136,7 +181,7 @@ async function loadRoute() {
   finally { if (generation === state.generation && `${route()[0]}/${route()[1]}` === key) render(); }
 }
 let searchTimer, searchSequence = 0, searchAbort;
-function updateResults() { const target = document.querySelector('#search-results'); if (target) { target.innerHTML = resultsHTML(); observeCovers(); } }
+function updateResults() { const target = document.querySelector('#search-results'); if (target) { target.innerHTML = resultsHTML(); observeCovers(); syncOffline(); } }
 function scheduleSearch() {
   clearTimeout(searchTimer); searchAbort?.abort();
   const sequence = ++searchSequence, query = state.search.trim(), generation = state.generation;
@@ -157,7 +202,7 @@ const coverObserver = new IntersectionObserver(entries => {
 function observeCovers() { coverObserver.disconnect(); document.querySelectorAll('img[data-cover]').forEach(img => coverObserver.observe(img)); }
 async function loadCover(img) {
   const id = img.dataset.cover, generation = state.generation;
-  if (!client.connected || !id) return;
+  if (!client.connected || state.localMode || !id) return;
   if (covers.has(id)) { img.src = covers.get(id); if (player.currentSong?.coverArt === id) player.setArtwork(img.src); return; }
   if (!loadingCovers.has(id)) loadingCovers.set(id, client.cover(id).then(blob => {
     if (generation !== state.generation) return null;
@@ -168,9 +213,10 @@ async function loadCover(img) {
 }
 let toastTimer;
 function toast(message) { const target = document.querySelector('#toast'); target.textContent = message; target.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => target.classList.remove('visible'), 5000); }
-function findSong(id) { return [...state.songs, ...state.results.songs, ...[...state.details.values()].flatMap(item => [...array(item.song), ...array(item.entry)])].find(song => song.id === id); }
+function findSong(id) { return [...state.songs, ...offline.songs, ...state.results.songs, ...[...state.details.values()].flatMap(item => [...array(item.song), ...array(item.entry)])].find(song => song.id === id); }
 function contextSongs() {
   const [page, id] = route(), item = state.details.get(`${page}/${id}`);
+  if (page === 'descargas' || state.localMode) return offlineSongs();
   const selection = page === 'album' ? array(item?.song) : page === 'playlist' ? array(item?.entry) : page === 'artista' ? artistSongs(state.songs, item) : page === 'buscar' ? state.results.songs : state.songs;
   return queueForSelection(selection, state.songs);
 }
@@ -190,8 +236,10 @@ function syncPlayer() {
   document.querySelector('#mini-title').textContent = song.title;
   document.querySelector('#mini-artist').textContent = displayArtist(song.artist);
   const miniCover = document.querySelector('#mini-cover');
-  if (miniCover.dataset.cover !== (song.coverArt || '')) {
-    miniCover.dataset.cover = song.coverArt || ''; miniCover.src = covers.get(song.coverArt) || placeholder; loadCover(miniCover);
+  if (miniCover.dataset.song !== song.id || miniCover.dataset.cover !== (song.coverArt || '')) {
+    miniCover.dataset.song = song.id;
+    miniCover.dataset.cover = song.coverArt || ''; miniCover.src = offline.coverURL(song) || covers.get(song.coverArt) || placeholder;
+    if (!offline.coverURL(song)) loadCover(miniCover);
   }
   document.querySelectorAll('[data-action="play"]').forEach(button => {
     button.setAttribute('aria-label', player.isPlaying ? 'Pausar' : 'Reproducir');
@@ -223,7 +271,7 @@ player.addEventListener('change', event => {
   if (event.detail.kind === 'time') { syncPosition(); return; }
   if (event.detail.kind === 'track') document.title = player.currentSong ? `${player.currentSong.title} · mimusic` : 'mimusic · Tu biblioteca';
   if (event.detail.kind === 'track' && route()[0] === 'reproductor') render(); else syncPlayer();
-  if (event.detail.kind === 'track' && covers.has(player.currentSong?.coverArt)) player.setArtwork(covers.get(player.currentSong.coverArt));
+  if (event.detail.kind === 'track' && player.currentSong) player.setArtwork(offline.coverURL(player.currentSong) || covers.get(player.currentSong.coverArt));
   if (player.error && player.error !== lastPlaybackError) toast(player.error);
   lastPlaybackError = player.error;
   if (document.querySelector('#queue-dialog').open && ['track', 'queue'].includes(event.detail.kind)) renderQueue();
@@ -263,8 +311,19 @@ document.addEventListener('click', event => {
   else if (action === 'enqueue') { const song = findSong(id); if (song) { player.enqueue(song); toast('Canción añadida a la cola.'); } }
   else if (action === 'import-scan') imports.scan();
   else if (action === 'import-retry') { const job = imports.jobs.find(job => job.id === id); if (job) imports.submit(job.source.value); }
+  else if (action === 'save-offline') { const song = findSong(id); if (song) { navigator.storage?.persist?.().catch(() => {}); offline.download([song]); toast('Guardando en este dispositivo. Consulta el progreso en Sin conexión.'); } }
+  else if (action === 'save-selection') {
+    const [page, detailID] = route(), item = state.details.get(`${page}/${detailID}`);
+    const songs = page === 'playlist' ? array(item?.entry) : array(item?.song);
+    navigator.storage?.persist?.().catch(() => {}); offline.download(songs); navigate('descargas');
+  }
+  else if (action === 'show-offline') navigate('descargas');
+  else if (action === 'play-offline') { const songs = offlineSongs(); if (songs.length) player.playSong(songs[0], songs); }
+  else if (action === 'remove-offline') { if (player.currentSong?.id === id) player.stop(); offline.remove(id); }
+  else if (action === 'cancel-downloads') offline.cancel();
+  else if (action === 'reconnect') { toast('Comprobando conexión con el servidor…'); window.dispatchEvent(new Event('mimusica-reconnect')); }
 });
-document.addEventListener('input', event => { if (event.target.id === 'search-input') { state.search = event.target.value; scheduleSearch(); } else if (event.target.id === 'import-source') imports.input = event.target.value; });
+document.addEventListener('input', event => { if (event.target.id === 'search-input') { state.search = event.target.value; scheduleSearch(); } else if (event.target.id === 'import-source') imports.input = event.target.value; else if (event.target.id === 'offline-search') { state.offlineQuery = event.target.value; renderOfflineSongs(); } });
 document.addEventListener('submit', event => { if (event.target.id === 'import-form') { event.preventDefault(); imports.submit(); } });
 document.addEventListener('change', event => { if (event.target.id === 'position') player.seek(Number(event.target.value)); });
 document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => {
@@ -273,8 +332,43 @@ document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('c
   if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
 }));
 window.addEventListener('hashchange', () => { imports.leave(); render(); loadRoute(); window.scrollTo({ top: 0, behavior: 'instant' }); });
-window.addEventListener('mimusica-connected', event => { state.restoring = false; clearSessionData(); document.querySelector('.profile').textContent = client.username[0].toLocaleUpperCase('es'); if (!event.detail?.restored) navigate('inicio'); loadLibrary(); });
-window.addEventListener('mimusica-session-ready', () => { state.restoring = false; if (!client.connected) render(); });
-window.addEventListener('mimusica-disconnected', () => { clearTimeout(searchTimer); searchAbort?.abort(); clearSessionData(); document.querySelector('.profile').textContent = 'M'; render(); });
+let connectionVersion = 0;
+window.addEventListener('mimusica-connected', async event => {
+  const version = ++connectionVersion, previousAccount = offline.account;
+  try { await offline.activate(event.detail?.serverURL || location.origin, client.username); }
+  catch { offline.error = 'No se pudo abrir el almacenamiento local. La reproducción por internet sigue disponible.'; toast(offline.error); }
+  if (version !== connectionVersion || !client.connected) return;
+  state.restoring = false; state.localMode = false;
+  clearSessionData(Boolean(event.detail?.restored && previousAccount === offline.account));
+  document.querySelector('.profile').textContent = client.username[0].toLocaleUpperCase('es');
+  if (!event.detail?.restored) navigate('inicio'); loadLibrary();
+});
+window.addEventListener('mimusica-session-ready', event => {
+  state.restoring = false;
+  if (!event.detail?.reachable || !client.connected) {
+    state.localMode = !event.detail?.reachable || offline.songs.length > 0;
+    render();
+  }
+});
+window.addEventListener('mimusica-disconnected', async event => {
+  connectionVersion++; clearTimeout(searchTimer); searchAbort?.abort(); offline.cancel();
+  clearSessionData(!event.detail?.logout && offline.has(player.currentSong?.id));
+  if (event.detail?.logout) {
+    try { await offline.deactivate(); } catch { toast('No se pudo cerrar el acceso a las descargas locales.'); }
+  }
+  state.localMode = !event.detail?.logout && offline.songs.length > 0;
+  document.querySelector('.profile').textContent = 'M'; render();
+});
+offline.addEventListener('change', event => {
+  syncOffline();
+  if (event.detail.kind === 'library') renderOfflineSongs();
+});
+offline.initialize().then(() => {
+  if (navigator.onLine === false || (!state.restoring && !client.connected && offline.songs.length)) { state.localMode = true; state.restoring = false; render(); }
+});
+window.addEventListener('offline', () => { state.localMode = true; state.restoring = false; offline.cancel(); render(); });
+window.addEventListener('online', () => window.dispatchEvent(new Event('mimusica-reconnect')));
 render();
-if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});
+if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js', { type: 'module' }).catch(() => {
+  offline.error = 'No se pudo preparar la app sin conexión. Recarga con internet antes de guardar canciones.'; syncOffline();
+});
