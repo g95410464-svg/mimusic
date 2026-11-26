@@ -2,7 +2,7 @@
 
 En Inicio o Biblioteca, pulsa **+ Añadir música**. Escribe el título y artista, o pega un enlace de **canción, álbum o playlist** de **YouTube**, **YouTube Music** o **Spotify**. Pulsa **Descargar al servidor**. El historial muestra el tipo de envío, progreso en tiempo real por canción, estado completado o reintento en caso de error. La descarga continúa aunque cierres la web.
 
-Cuando termine, pulsa **Actualizar biblioteca** para iniciar un escaneo de Navidrome. Los álbumes aparecerán agrupados en **Álbumes** con su carátula oficial y las playlists importarán automáticamente su archivo `.m3u` en la pestaña **Playlists**.
+Cuando termine, pulsa **Actualizar biblioteca** para iniciar un escaneo de Navidrome. Las canciones aparecen directamente en **Biblioteca → Canciones**. Las playlists conservan su orden mediante el archivo `.m3u` en **Playlists**. Si no hay etiqueta de álbum, mimusic oculta la agrupación interna [Unknown Album] de Navidrome; no inventa un álbum ni elimina sus canciones. Los álbumes con metadatos reales siguen disponibles en la categoría opcional **Álbumes**.
 
 ## Fuentes y límites
 

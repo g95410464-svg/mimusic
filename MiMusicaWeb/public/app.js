@@ -2,6 +2,7 @@ import { libraryClient as client, array, searchResult, artistList } from './libr
 import './connection.js';
 import { MusicPlayer, queueForSelection } from './player.js';
 import { ImportsPanel } from './imports.js';
+import { namedAlbums, displayArtist, songSubtitle, artistSongs } from './library-display.js';
 
 const main = document.querySelector('#main');
 const imports = new ImportsPanel(() => loadLibrary());
@@ -10,7 +11,7 @@ const player = new MusicPlayer(client, { audio: document.querySelector('#audio-p
 function saveShuffle() { try { localStorage.setItem('mimusica.shuffle', String(player.isShuffled)); } catch { /* La preferencia es opcional en modo privado. */ } }
 const shuffleControl = '<button class="shuffle-button shuffle-toggle" data-action="shuffle" aria-label="Reproducción aleatoria" aria-pressed="false"><img src="/assets/shuffle.svg" width="22" height="22" alt="">Aleatorio</button>';
 const repeatControls = '<div class="repeat-controls" role="group" aria-label="Repetir esta canción"><button class="repeat-button" data-action="repeat-one" aria-pressed="false" title="Repite esta canción hasta que lo desactives"><img src="/assets/repeat.svg" width="20" height="20" alt="">Repetir siempre</button><button class="repeat-button" data-action="repeat-once" aria-pressed="false" title="La repite una vez y después continúa la cola"><span aria-hidden="true">+1</span>Una vez más</button></div>';
-const state = { albums: [], artists: [], songs: [], playlists: [], loading: false, restoring: true, error: '', library: 'albums',
+const state = { albums: [], artists: [], songs: [], playlists: [], loading: false, restoring: true, error: '', library: 'songs',
   search: '', searchType: 'all', results: { songs: [], albums: [], artists: [] }, searchLoading: false, searchError: '',
   backStack: [], details: new Map(), detailLoading: '', detailError: '', generation: 0 };
 const covers = new Map(), loadingCovers = new Map();
@@ -22,17 +23,17 @@ const route = () => { const [page = 'inicio', id = ''] = location.hash.slice(1).
 const heading = (name, eyebrow = 'TU BIBLIOTECA PRIVADA') => `<div class="page-heading"><div><span class="eyebrow">${esc(eyebrow)}</span><h1>${esc(name)}</h1></div><div class="heading-actions"><a href="#anadir" class="secondary-button">+ Añadir música</a><button class="secondary-button" data-action="refresh">Actualizar</button></div></div>`;
 const empty = (name, text, action = '') => `<div class="empty-state"><div class="empty-symbol" aria-hidden="true">♫</div><h2>${esc(name)}</h2><p>${esc(text)}</p>${action}</div>`;
 const photo = (item, className = '') => `<img src="${esc(covers.get(item?.coverArt) || placeholder)}" ${item?.coverArt ? `data-cover="${esc(item.coverArt)}"` : ''} class="${className}" alt="${esc(title(item))}" loading="lazy">`;
-const albumCard = album => `<button class="album-card" data-action="album" data-id="${esc(album.id)}">${photo(album, 'album-art')}<strong>${esc(title(album))}</strong><span>${esc(album.artist || 'Artista desconocido')}</span></button>`;
+const albumCard = album => `<button class="album-card" data-action="album" data-id="${esc(album.id)}">${photo(album, 'album-art')}<strong>${esc(title(album))}</strong><span>${esc(displayArtist(album.artist))}</span></button>`;
 const playlistCard = playlist => `<button class="album-card" data-action="playlist" data-id="${esc(playlist.id)}">${photo(playlist, 'album-art')}<strong>${esc(title(playlist))}</strong><span>${playlist.songCount || 0} canciones</span></button>`;
-const artistCards = artists => `<div class="artists">${artists.map(artist => `<button class="artist-card" data-action="artist" data-id="${esc(artist.id)}">${photo(artist)}<strong>${esc(title(artist))}</strong><p>${artist.albumCount ?? 0} álbumes</p></button>`).join('')}</div>`;
-const songsHTML = (songs, fromQueue = false) => `<div class="track-list">${songs.map((song, i) => `<div class="track-row ${(fromQueue ? player.index === i : player.currentSong?.id === song.id) ? 'selected' : ''}" data-song-id="${esc(song.id)}"><span class="track-number">${i + 1}</span>${photo(song, 'track-thumb')}<button class="track-main" data-action="${fromQueue ? 'queue-song' : 'song'}" data-id="${esc(song.id)}" ${fromQueue ? `data-queue-index="${i}"` : ""} aria-label="Reproducir ${esc(song.title || 'canción')}"><strong>${esc(song.title || 'Sin título')}</strong><span>${esc(song.artist || 'Artista desconocido')} · ${esc(song.album || 'Sin álbum')}</span></button><span class="track-time">${time(song.duration)}</span>${fromQueue ? '' : `<button class="track-more" data-action="enqueue" data-id="${esc(song.id)}" aria-label="Añadir a la cola: ${esc(song.title)}">+</button>`}</div>`).join('')}</div>`;
+const artistCards = artists => `<div class="artists">${artists.map(artist => `<button class="artist-card" data-action="artist" data-id="${esc(artist.id)}">${photo(artist)}<strong>${esc(title(artist))}</strong><p>${artistSongs(state.songs, artist).length} canciones</p></button>`).join('')}</div>`;
+const songsHTML = (songs, fromQueue = false) => `<div class="track-list">${songs.map((song, i) => `<div class="track-row ${(fromQueue ? player.index === i : player.currentSong?.id === song.id) ? 'selected' : ''}" data-song-id="${esc(song.id)}"><span class="track-number">${i + 1}</span>${photo(song, 'track-thumb')}<button class="track-main" data-action="${fromQueue ? 'queue-song' : 'song'}" data-id="${esc(song.id)}" ${fromQueue ? `data-queue-index="${i}"` : ""} aria-label="Reproducir ${esc(song.title || 'canción')}"><strong>${esc(song.title || 'Sin título')}</strong><span>${esc(songSubtitle(song))}</span></button><span class="track-time">${time(song.duration)}</span>${fromQueue ? '' : `<button class="track-more" data-action="enqueue" data-id="${esc(song.id)}" aria-label="Añadir a la cola: ${esc(song.title)}">+</button>`}</div>`).join('')}</div>`;
 
 function home() {
   if (!state.albums.length && !state.songs.length) return `${heading('Tu música')}${empty('Tu biblioteca todavía está vacía', 'Navidrome no devolvió canciones. Comprueba que haya terminado de escanear la carpeta de música.', '<button class="primary-button" data-action="refresh">Actualizar biblioteca</button>')}`;
-  return `${heading('Tu música')}<button class="secondary-button quick-play" data-action="shuffle-library"><img src="/assets/shuffle.svg" width="20" height="20" alt="">Reproducir aleatoriamente</button><section class="shelf"><div class="section-heading"><h2>Recién añadidos</h2><a class="section-link" href="#biblioteca" data-action="show-albums">Ver los ${state.albums.length} álbumes</a></div><div class="album-grid">${state.albums.slice(0, 10).map(albumCard).join('')}</div></section><section class="shelf"><div class="section-heading"><h2>En tu biblioteca</h2><a class="section-link" href="#biblioteca" data-action="show-songs">Ver las ${state.songs.length} canciones</a></div>${songsHTML(state.songs.slice(0, 10))}</section>${state.playlists.length ? `<section class="shelf"><div class="section-heading"><h2>Tus playlists</h2><a class="section-link" href="#playlists">Ver todas</a></div><div class="album-grid">${state.playlists.slice(0, 5).map(playlistCard).join('')}</div></section>` : ''}`;
+  return `${heading('Tu música')}<button class="secondary-button quick-play" data-action="shuffle-library"><img src="/assets/shuffle.svg" width="20" height="20" alt="">Reproducir aleatoriamente</button><section class="shelf"><div class="section-heading"><h2>Tus canciones</h2><a class="section-link" href="#biblioteca" data-action="show-songs">Ver las ${state.songs.length} canciones</a></div>${songsHTML(state.songs.slice(0, 10))}</section>${state.playlists.length ? `<section class="shelf"><div class="section-heading"><h2>Tus playlists</h2><a class="section-link" href="#playlists">Ver todas</a></div><div class="album-grid">${state.playlists.slice(0, 5).map(playlistCard).join('')}</div></section>` : ''}`;
 }
 function library() {
-  const filters = [['albums', 'Álbumes'], ['artists', 'Artistas'], ['songs', 'Canciones']];
+  const filters = [['songs', 'Canciones'], ['artists', 'Artistas'], ['albums', 'Álbumes']];
   let content;
   if (state.library === 'artists') content = state.artists.length ? artistCards(state.artists) : empty('Sin artistas', 'Navidrome no devolvió artistas.');
   else if (state.library === 'songs') content = state.songs.length ? songsHTML(state.songs) : empty('Sin canciones', 'Añade música a Navidrome y actualiza la biblioteca.');
@@ -46,14 +47,17 @@ function details(kind, id) {
   const key = `${kind}/${id}`, item = state.details.get(key);
   const back = '<button class="back-button" data-action="back">‹ Volver</button>';
   if (!item) return back + (state.detailError && state.detailLoading === key ? empty('No se pudo abrir', state.detailError, '<button class="primary-button" data-action="retry-detail">Reintentar</button>') : empty('Cargando…', 'Consultando tu biblioteca.'));
-  if (kind === 'artista') return `${back}${heading(title(item), 'ARTISTA')}<div class="album-grid">${array(item.album).map(albumCard).join('')}</div>${!array(item.album).length ? empty('Sin álbumes', 'Este artista no tiene álbumes disponibles.') : ''}`;
+  if (kind === 'artista') {
+    const songs = artistSongs(state.songs, item), albums = namedAlbums(item.album);
+    return `${back}${heading(title(item), 'ARTISTA')}${songs.length ? `<section class="shelf"><h2>Canciones</h2>${songsHTML(songs)}</section>` : ''}${albums.length ? `<section class="shelf"><h2>Álbumes</h2><div class="album-grid">${albums.map(albumCard).join('')}</div></section>` : ''}${!songs.length && !albums.length ? empty('Sin canciones', 'No hay canciones disponibles para este artista.') : ''}`;
+  }
   const songs = kind === 'album' ? array(item.song) : array(item.entry);
   return `${back}<section class="detail-hero">${photo(item, 'detail-cover')}<div><span class="eyebrow">${kind === 'album' ? 'ÁLBUM' : 'PLAYLIST'}</span><h1>${esc(title(item))}</h1><p>${esc(item.artist || item.comment || '')}</p><p>${songs.length} canciones · ${Math.round(songs.reduce((sum, song) => sum + (Number(song.duration) || 0), 0) / 60)} minutos${item.year ? ` · ${esc(item.year)}` : ''}</p>${songs.length ? '<div class="detail-actions"><button class="primary-button" data-action="play-selection"><span class="play-icon" aria-hidden="true"></span>Reproducir</button><button class="secondary-button" data-action="shuffle-selection"><img src="/assets/shuffle.svg" width="20" height="20" alt="">Aleatorio</button></div>' : ''}</div></section>${songsHTML(songs)}`;
 }
 function playerPage() {
   const song = player.currentSong;
   if (!song) return empty('Elige tu primera canción', 'Toca una canción de tu biblioteca o de los resultados de búsqueda para reproducirla.', '<a class="primary-button" href="#biblioteca">Abrir biblioteca</a>');
-  return `<section class="player-page"><p class="player-context">AHORA SUENA</p>${photo(song, 'player-art')}<div class="player-title"><h1>${esc(song.title)}</h1><p>${esc(song.artist || '')} · ${esc(song.album || '')}</p></div><div class="player-controls"><button class="icon-button" data-action="previous" aria-label="Canción anterior"><span class="skip-icon previous" aria-hidden="true"></span></button><button class="play-button" data-action="play" aria-label="Reproducir"><span class="play-icon" aria-hidden="true"></span></button><button class="icon-button" data-action="next" aria-label="Siguiente canción"><span class="skip-icon" aria-hidden="true"></span></button></div>${repeatControls}<p id="playback-message" class="playback-message" role="status" aria-live="polite"></p><div class="player-bottom"><input class="scrubber" type="range" id="position" min="0" max="${player.duration}" value="${player.currentTime}" step="0.1" aria-label="Posición de reproducción"><div class="time-labels"><span id="elapsed">${time(player.currentTime)}</span><span id="remaining">−${time(player.duration - player.currentTime)}</span></div><div class="player-options">${shuffleControl}<span id="playback-mode" class="playback-mode">Reproducción continua</span><button class="icon-button" data-action="queue" aria-label="Ver cola"><img class="figma-icon" src="/assets/imgList.svg" alt=""></button></div></div></section>`;
+  return `<section class="player-page"><p class="player-context">AHORA SUENA</p>${photo(song, 'player-art')}<div class="player-title"><h1>${esc(song.title)}</h1><p>${esc(songSubtitle(song))}</p></div><div class="player-controls"><button class="icon-button" data-action="previous" aria-label="Canción anterior"><span class="skip-icon previous" aria-hidden="true"></span></button><button class="play-button" data-action="play" aria-label="Reproducir"><span class="play-icon" aria-hidden="true"></span></button><button class="icon-button" data-action="next" aria-label="Siguiente canción"><span class="skip-icon" aria-hidden="true"></span></button></div>${repeatControls}<p id="playback-message" class="playback-message" role="status" aria-live="polite"></p><div class="player-bottom"><input class="scrubber" type="range" id="position" min="0" max="${player.duration}" value="${player.currentTime}" step="0.1" aria-label="Posición de reproducción"><div class="time-labels"><span id="elapsed">${time(player.currentTime)}</span><span id="remaining">−${time(player.duration - player.currentTime)}</span></div><div class="player-options">${shuffleControl}<span id="playback-mode" class="playback-mode">Reproducción continua</span><button class="icon-button" data-action="queue" aria-label="Ver cola"><img class="figma-icon" src="/assets/imgList.svg" alt=""></button></div></div></section>`;
 }
 function searchPage() {
   return `${heading('Encuentra tu música')}<label class="search-field"><img class="figma-icon" src="/assets/imgMagnifyingglass2.svg" alt=""><input id="search-input" type="search" aria-label="Buscar canciones, álbumes o artistas" placeholder="Canciones, álbumes, artistas…" autocomplete="off" value="${esc(state.search)}"><button class="clear-search" data-action="clear-search" aria-label="Borrar búsqueda">×</button></label><div class="filter-chips" aria-label="Tipo de resultado">${[['all', 'Todo'], ['songs', 'Canciones'], ['albums', 'Álbumes'], ['artists', 'Artistas']].map(([key, name]) => `<button class="chip" data-action="search-filter" data-id="${key}" aria-pressed="${state.searchType === key}">${name}</button>`).join('')}</div><div id="search-results" aria-live="polite">${resultsHTML()}</div>`;
@@ -62,7 +66,8 @@ function resultsHTML() {
   if (!state.search.trim()) return empty('Busca en tu biblioteca', 'Escribe el título de una canción, un álbum o un artista.');
   if (state.searchLoading) return empty('Buscando…', 'Consultando Navidrome.');
   if (state.searchError) return empty('No se pudo buscar', state.searchError, '<button class="primary-button" data-action="retry-search">Reintentar</button>');
-  const { songs, albums, artists } = state.results;
+  const { songs, albums: allAlbums, artists } = state.results;
+  const albums = namedAlbums(allAlbums);
   let html = '';
   if (['all', 'songs'].includes(state.searchType) && songs.length) html += `<section class="results-section"><h2>Canciones</h2>${songsHTML(songs)}${songs.length === 100 ? '<p class="page-note">Se muestran las primeras 100 coincidencias. Afina la búsqueda para encontrar una canción concreta.</p>' : ''}</section>`;
   if (['all', 'albums'].includes(state.searchType) && albums.length) html += `<section class="results-section"><h2>Álbumes</h2><div class="album-grid">${albums.map(albumCard).join('')}</div></section>`;
@@ -110,7 +115,7 @@ async function loadLibrary() {
       client.catalog('albums'), client.request('getArtists'), client.request('getPlaylists'), client.catalog('songs')
     ]);
     if (generation !== state.generation) return;
-    state.albums = albums; state.artists = artistList(artistBody);
+    state.albums = namedAlbums(albums); state.artists = artistList(artistBody);
     state.playlists = array(playlistBody.playlists?.playlist); state.songs = songs;
   } catch (error) { if (generation === state.generation) state.error = error.message; }
   finally { if (generation === state.generation) { state.loading = false; render(); loadRoute(); } }
@@ -166,7 +171,7 @@ function toast(message) { const target = document.querySelector('#toast'); targe
 function findSong(id) { return [...state.songs, ...state.results.songs, ...[...state.details.values()].flatMap(item => [...array(item.song), ...array(item.entry)])].find(song => song.id === id); }
 function contextSongs() {
   const [page, id] = route(), item = state.details.get(`${page}/${id}`);
-  const selection = page === 'album' ? array(item?.song) : page === 'playlist' ? array(item?.entry) : page === 'buscar' ? state.results.songs : state.songs;
+  const selection = page === 'album' ? array(item?.song) : page === 'playlist' ? array(item?.entry) : page === 'artista' ? artistSongs(state.songs, item) : page === 'buscar' ? state.results.songs : state.songs;
   return queueForSelection(selection, state.songs);
 }
 function renderQueue() {
@@ -183,7 +188,7 @@ function syncPlayer() {
   if (mode) mode.textContent = player.repeatMode === 'one' ? 'Esta canción se repite hasta que lo desactives' : player.repeatMode === 'once' ? 'Sonará una vez más y después seguirá la cola' : `${player.isShuffled ? 'Aleatorio' : 'En orden'} · Reproducción continua`;
   if (!song) return;
   document.querySelector('#mini-title').textContent = song.title;
-  document.querySelector('#mini-artist').textContent = song.artist || 'Artista desconocido';
+  document.querySelector('#mini-artist').textContent = displayArtist(song.artist);
   const miniCover = document.querySelector('#mini-cover');
   if (miniCover.dataset.cover !== (song.coverArt || '')) {
     miniCover.dataset.cover = song.coverArt || ''; miniCover.src = covers.get(song.coverArt) || placeholder; loadCover(miniCover);
